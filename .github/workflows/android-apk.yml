@@ -1,0 +1,91 @@
+name: Aurora Android APK alpha
+on:
+  push:
+    branches: [android-apk-20261029]
+    paths: ['android-port/**', '.github/workflows/android-apk.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aurora-android-alpha
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout Aurora build recipe
+        uses: actions/checkout@v4
+        with:
+          path: aurora-recipe
+          persist-credentials: false
+      - name: Checkout pinned Android game engine
+        uses: actions/checkout@v4
+        with:
+          repository: ZalithLauncher/ZalithLauncher2
+          ref: a6b6fb6a63ce22c4e4fa91cc29a4d64286cd0924
+          path: engine
+          submodules: recursive
+          persist-credentials: false
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - name: Install cargo-ndk
+        run: |
+          curl --fail --location --retry 3 https://github.com/bbqsrc/cargo-ndk/releases/download/v4.1.2/cargo-ndk-x86_64-unknown-linux-gnu-v4.1.2.tgz -o cargo-ndk.tgz
+          tar xzf cargo-ndk.tgz -C "$HOME/.cargo/bin" --strip-components=1
+          chmod +x "$HOME/.cargo/bin"/cargo-ndk*
+          cargo ndk --version
+      - name: Install native toolchains
+        run: |
+          sdkmanager --install 'ndk;25.2.9519653' 'ndk;27.0.12077973'
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973" >> "$GITHUB_ENV"
+      - name: Apply Aurora adaptation
+        run: |
+          python3 aurora-recipe/android-port/prepare.py engine
+          keytool -genkeypair -noprompt -keystore engine/ZalithLauncher/aurora_debug.jks -storepass android -keypass android -alias aurora_android -keyalg RSA -keysize 2048 -validity 3650 -dname 'CN=Aurora Android Alpha, O=reunionSama'
+      - name: Build installable arm64 APK
+        working-directory: engine
+        run: |
+          chmod +x gradlew
+          ./gradlew ZalithLauncher:assembleDebug -Darch=arm64 --stacktrace --no-daemon --max-workers=2
+      - name: Verify and collect APK
+        run: |
+          mkdir -p deliverables
+          apk=$(find engine/ZalithLauncher/build/outputs/apk/debug -name '*.apk' -print -quit)
+          test -n "$apk"
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          "$apksigner" verify --verbose --print-certs "$apk" | tee deliverables/signature-check.txt
+          aapt=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
+          "$aapt" dump badging "$apk" | tee deliverables/package-check.txt
+          grep -q 'io.github.reunionsama.auroralauncher' deliverables/package-check.txt
+          cp "$apk" deliverables/AuroraLauncher-Android-arm64-alpha.apk
+          sha256sum deliverables/*.apk > deliverables/SHA256SUMS
+          cp engine/AURORA_ANDROID_NOTICE.txt deliverables/
+      - name: Package corresponding modified source
+        run: |
+          cp -r aurora-recipe/android-port engine/aurora-build-recipe
+          cp aurora-recipe/.github/workflows/android-apk.yml engine/aurora-build-recipe/
+          tar --exclude='.git' --exclude='.gradle' --exclude='*/build' --exclude='*/target' --exclude='*.jks' -czf Aurora-Android-corresponding-source.tar.gz -C engine .
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurora-Android-arm64-APK
+          path: deliverables/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload GPL corresponding source
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurora-Android-corresponding-source
+          path: Aurora-Android-corresponding-source.tar.gz
+          retention-days: 30
+          if-no-files-found: error
