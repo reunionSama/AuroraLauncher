@@ -23,3 +23,12 @@ licenses. The distributed APK must be accompanied by access to that source.
 Reproduce on a machine with JDK 21, Android SDK/NDKs and Rust/cargo-ndk as specified
 in `.github/workflows/android-apk.yml`. Apply `prepare.py` to the pinned upstream,
 generate the documented test key and run the recorded Gradle command.
+
+## Alpha2: branding and Microsoft registration
+
+- Uses the project owner's public OAuth client ID `785d7402-026c-44d0-ae65-d4b29eb27d3c` at all three Microsoft OAuth request call sites.
+- Device-code registration preflight returned HTTP 200; no user login, token polling or account credentials were used by this test. Full Xbox/Minecraft sign-in still needs device testing.
+- Replaces the launcher/about raster image, fallback-density launcher icons, Play Store artwork and the original project-author/sponsor avatar images with Aurora/generic assets. Textual author credits and licenses remain.
+- Uses the same Microsoft v2 token endpoint for refresh; respects the device-flow slowdown interval and reports the initial endpoint's OAuth error code/description.
+- Alpha2 uses `io.github.reunionsama.auroralauncher.android` and versionCode 200047. Alpha1 used an ephemeral test key and `.android.debug`; it can remain installed so its data is not erased. No automatic data migration is claimed.
+- Final delivery is locally re-signed using a private persistent Aurora key. Private keys/passwords are never added to this public repository or workflow artifacts.

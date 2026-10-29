@@ -13,6 +13,8 @@ jobs:
   apk:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    env:
+      OAUTH_CLIENT_ID: 785d7402-026c-44d0-ae65-d4b29eb27d3c
     steps:
       - name: Checkout Aurora build recipe
         uses: actions/checkout@v4
@@ -59,6 +61,8 @@ jobs:
         run: |
           python3 aurora-recipe/android-port/prepare.py engine
           keytool -genkeypair -noprompt -keystore engine/ZalithLauncher/aurora_debug.jks -storepass android -keypass android -alias aurora_android -keyalg RSA -keysize 2048 -validity 3650 -dname 'CN=Aurora Android Alpha, O=reunionSama'
+      - name: Check public Microsoft registration
+        run: python3 aurora-recipe/android-port/oauth_preflight.py engine/OAUTH_PREFLIGHT.json
       - name: Build installable arm64 APK
         working-directory: engine
         run: |
@@ -74,9 +78,9 @@ jobs:
           aapt=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
           "$aapt" dump badging "$apk" | tee deliverables/package-check.txt
           grep -q 'io.github.reunionsama.auroralauncher' deliverables/package-check.txt
-          cp "$apk" deliverables/AuroraLauncher-Android-arm64-alpha.apk
+          cp "$apk" deliverables/AuroraLauncher-Android-arm64-alpha2.apk
           sha256sum deliverables/*.apk > deliverables/SHA256SUMS
-          cp engine/AURORA_ANDROID_NOTICE.txt deliverables/
+          cp engine/AURORA_ANDROID_NOTICE.txt engine/AURORA_BRANDING_AUDIT.json engine/OAUTH_PREFLIGHT.json deliverables/
       - name: Package corresponding modified source
         run: |
           cp -r aurora-recipe/android-port engine/aurora-build-recipe
