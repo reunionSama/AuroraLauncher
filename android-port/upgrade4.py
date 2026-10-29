@@ -77,6 +77,8 @@ def apply(root):
  p=j/'ui/screens/content/SettingsScreen.kt';change(p,'eventViewModel.sendEvent(EventViewModel.Event.OpenLink("https://github.com/reunionSama/AuroraLauncher/releases"))','eventViewModel.sendEvent(EventViewModel.Event.CheckUpdate)')
  p=j/'ui/activities/MainActivity.kt';change(p,'                    is EventViewModel.Event.Launch.Game -> {','''                    is EventViewModel.Event.Launch.Game -> {
                         com.movtery.zalithlauncher.ui.screens.content.aurora.checkAuroraUpdate(this@MainActivity, lifecycleScope)''')
+ for case in ['PlayServer','PlaySave']:
+  change(p,'                    is EventViewModel.Event.Launch.'+case+' -> {','                    is EventViewModel.Event.Launch.'+case+' -> {\n                        com.movtery.zalithlauncher.ui.screens.content.aurora.checkAuroraUpdate(this@MainActivity, lifecycleScope)')
  manifest=m/'src/main/AndroidManifest.xml';change(manifest,'    <application','    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n    <application')
  for p in (j/'ui/screens/content/aurora').glob('*.kt'):
   if p.name=='AuroraIdentityCard.kt':

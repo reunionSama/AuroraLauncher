@@ -25,12 +25,15 @@ internal data class AuroraRelease(val alpha:Int,val page:String,val download:Str
 private const val REPO="https://github.com/reunionSama/AuroraLauncher-Android"
 private val checking=AtomicBoolean(false)
 internal fun newerAuroraRelease(body:String,currentAlpha:Int):AuroraRelease? = parseRelease(body,currentAlpha,Long.MAX_VALUE)
-internal fun parseRelease(body:String,currentAlpha:Int,buildTime:Long):AuroraRelease? {
+internal fun parseRelease(body:String,currentAlpha:Int,buildTime:Long,installedDigest:String="",ignored:Set<String> = emptySet()):AuroraRelease? {
  return Json.parseToJsonElement(body).jsonArray.flatMap {value->
   val r=value.jsonObject;val page=r["html_url"]?.jsonPrimitive?.content.orEmpty()
   if(r["draft"]?.jsonPrimitive?.booleanOrNull==true || !page.startsWith("$REPO/releases/tag/")) return@flatMap emptyList()
   r["assets"]?.jsonArray.orEmpty().mapNotNull {element->
    val a=element.jsonObject;val name=a["name"]?.jsonPrimitive?.content.orEmpty();val url=a["browser_download_url"]?.jsonPrimitive?.content.orEmpty()
+   val assetId=a["id"]?.jsonPrimitive?.longOrNull?:0
+   val digest=a["digest"]?.jsonPrimitive?.content.orEmpty()
+   if(assetId.toString() in ignored || (installedDigest.isNotEmpty() && digest==installedDigest))return@mapNotNull null
    val alpha=Regex("alpha(\\d+)",RegexOption.IGNORE_CASE).find(name)?.groupValues?.get(1)?.toIntOrNull()
    val updated=runCatching{Instant.parse(a["updated_at"]!!.jsonPrimitive.content).toEpochMilli()}.getOrDefault(0)
    val named=(name.equals("AuroraLauncher.apk",true) && updated>buildTime)
@@ -49,7 +52,20 @@ fun checkAuroraUpdate(context:Context,scope:CoroutineScope,force:Boolean=false) 
     try{c.connectTimeout=6000;c.readTimeout=6000;c.setRequestProperty("User-Agent","AuroraLauncher/alpha4");check(c.responseCode==200){"HTTP ${c.responseCode}"}
      val json=c.inputStream.bufferedReader().use{it.readText()};check(json.length<2*1024*1024)
      val buildTime=context.assets.open("AURORA_CHANNEL.json").bufferedReader().use{Json.parseToJsonElement(it.readText()).jsonObject["build_time"]!!.jsonPrimitive.long}
-     parseRelease(json,4,buildTime)
+     val currentAlpha=Regex("alpha(\\d+)").find(BuildConfig.VERSION_NAME)?.groupValues?.get(1)?.toIntOrNull()?:4
+     val ignored=context.getSharedPreferences("aurora_update_rejected",0).getStringSet("ids",emptySet())!!.toSet()
+     val prefs=context.getSharedPreferences("aurora_update_digest",0)
+     val cacheKey="${BuildConfig.VERSION_CODE}:${context.packageManager.getPackageInfo(context.packageName,0).lastUpdateTime}"
+     val installedDigest=if(json.contains("AuroraLauncher.apk",true))prefs.getString(cacheKey,null)?:run {
+      val md=MessageDigest.getInstance("SHA-256")
+      File(context.applicationInfo.sourceDir).inputStream().use { input ->
+       val buffer=ByteArray(65536)
+       while(true){val n=input.read(buffer);if(n<0)break;md.update(buffer,0,n)}
+      }
+      val hash="sha256:"+md.digest().joinToString(""){"%02x".format(it)}
+      prefs.edit().putString(cacheKey,hash).apply();hash
+     }else ""
+     parseRelease(json,currentAlpha,buildTime,installedDigest,ignored)
     }finally{c.disconnect()}
    }}
    val release=result.getOrNull()
@@ -89,7 +105,11 @@ private fun downloadUpdate(context:Context,scope:CoroutineScope,r:AuroraRelease)
     if(state.third>0)dialog.progress=(state.second*100/state.third).toInt()
     if(state.first==DownloadManager.STATUS_SUCCESSFUL){
      val error=withContext(Dispatchers.IO){validateUpdate(context,file,r.digest)}
-     check(error==null){error.orEmpty()}
+     if(error!=null){
+      val rejected=context.getSharedPreferences("aurora_update_rejected",0)
+      rejected.edit().putStringSet("ids",rejected.getStringSet("ids",emptySet())!!.toSet()+r.id.toString()).apply()
+      throw IllegalStateException(error)
+     }
      dialog.dismiss()
      AlertDialog.Builder(context).setTitle("更新下载完成").setMessage(r.body).setNegativeButton("稍后",null).setPositiveButton("安装更新"){_,_->
       if(Build.VERSION.SDK_INT>=26 && !context.packageManager.canRequestPackageInstalls()){

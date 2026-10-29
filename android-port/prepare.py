@@ -15,7 +15,7 @@ values = {
     'launcher_name': 'AuroraLauncher',
     'launcher_app_name': 'AuroraLauncher',
     'launcher_short_name': 'Aurora',
-    'url_home': 'https://github.com/reunionSama/AuroraLauncher',
+    'url_home': 'https://github.com/reunionSama/AuroraLauncher-Android',
     'launcher_version_name': '2.7.2-Aurora-alpha4',
     'launcher_version_code': '200049',
     'default_store_password': 'android',

@@ -48,5 +48,10 @@ class AuroraDiagnosticsTest {
         assertNull(newerAuroraRelease(json, 4))
     }
     @Test fun missingLogGivesActionableMessage() { assertTrue(readLogTail(null).contains("启动")) }
+
+    private val generic = """[{"html_url":"https://github.com/reunionSama/AuroraLauncher-Android/releases/tag/a5","assets":[{"id":99,"name":"AuroraLauncher.apk","updated_at":"2030-01-01T00:00:00Z","digest":"sha256:known","browser_download_url":"https://github.com/reunionSama/AuroraLauncher-Android/releases/download/a5/AuroraLauncher.apk"}]}]"""
+    @Test fun sameApkDigestIsNotAnUpdate() { assertNull(parseRelease(generic,4,0,"sha256:known")) }
+    @Test fun rejectedAssetIsNotDownloadedAgain() { assertNull(parseRelease(generic,4,0,"sha256:other",setOf("99"))) }
+    @Test fun newerGenericAssetIsRecognized() { assertEquals(99L,parseRelease(generic,4,0,"sha256:old")?.id) }
 }
 
