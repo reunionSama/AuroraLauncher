@@ -52,7 +52,7 @@ Use JDK21, Android SDK/NDKs and Rust targets from
 `.github/workflows/android-apk.yml`. Apply `prepare.py` to a clean checkout of
 the pinned upstream (including submodules). It applies identity/authentication
 fixes, then `redesign.py` copies Aurora overlays and patches navigation.
-The workflow builds the ARM64 APK, runs eight focused diagnostic/update tests,
+The workflow builds the ARM64 APK, runs eleven focused diagnostic/update tests,
 checks signature/package and publishes the full modified corresponding source,
 including native submodules, recipe, build configuration and license notices.
 Private signing credentials are excluded.
@@ -79,3 +79,4 @@ signing certificate are required. Android permission and package installation
 still require user interaction. Unknown newer generic APKs are recognized using
 asset update time and validated by their actual package metadata after downloading.
 No artificial update is published merely to exercise this feature.
+

@@ -16,7 +16,7 @@ def snapshot():
     except (ValueError,ET.ParseError):return None
 
 def tap(node):
-    nums=list(map(int,re.findall(r'\d+',node.get('bounds',''))))
+    nums=list(map(int,re.findall(r'[0-9]+',node.get('bounds',''))))
     if len(nums)==4:adb('shell','input','tap',str((nums[0]+nums[2])//2),str((nums[1]+nums[3])//2))
 
 try:
@@ -34,6 +34,12 @@ try:
             nodes=list(tree.iter('node'))
             tool=next((n for n in nodes if 'Aurora 工具' in (n.get('text','')+n.get('content-desc',''))),None)
             if tool is not None:
+                # First-run guide popups do not always appear in UIAutomator's window tree.
+                # Click a harmless empty margin to complete all guide steps before interacting.
+                for _ in range(8):
+                    adb('shell','input','tap','20','200');time.sleep(.8)
+                tree=snapshot();nodes=list(tree.iter('node')) if tree is not None else []
+                tool=next((n for n in nodes if 'Aurora 工具' in (n.get('text','')+n.get('content-desc',''))),tool)
                 with (out/'home.png').open('wb') as f:subprocess.run(['adb','exec-out','screencap','-p'],stdout=f,check=True)
                 custom=next((n for n in nodes if n.get('text')=='极光与个性化'),None)
                 report['aurora_home_visible']=custom is not None
@@ -41,7 +47,11 @@ try:
                     tap(custom);time.sleep(1)
                     tree=snapshot()
                     report['personalization_opened']=tree is not None and any('让 Aurora 更像你的启动器' in n.get('text','') for n in tree.iter('node'))
-                    adb('shell','input','keyevent','4');time.sleep(1)
+                    if report.get('personalization_opened'):
+                        with (out/'personalization.png').open('wb') as f:subprocess.run(['adb','exec-out','screencap','-p'],stdout=f,check=True)
+                        adb('shell','input','keyevent','4');time.sleep(1)
+                    tree=snapshot();nodes=list(tree.iter('node')) if tree is not None else []
+                    tool=next((n for n in nodes if 'Aurora 工具' in (n.get('text','')+n.get('content-desc',''))),tool)
                 tap(tool);time.sleep(2)
                 tree=snapshot()
                 if tree is not None and any('我的工作台' in n.get('text','') for n in tree.iter('node')):
@@ -72,4 +82,5 @@ finally:
     (out/'smoke-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     print(json.dumps(report,ensure_ascii=False))
 if not report['tool_screen_reached'] or any(report.get(k) is not True for k in ['启动前检查','网络诊断','日志速览']):sys.exit(1)
+
 

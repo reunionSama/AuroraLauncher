@@ -29,9 +29,11 @@ def apply(root):
  p=j/'ui/components/_PetLib.kt';change(p,'    gazeEnabled: Boolean = true,','    gazeEnabled: Boolean = true,\n    auroraAuto: Boolean = false,')
  change(p,'    var previewBounds by remember', '''    val auroraPrefs = com.movtery.zalithlauncher.ui.screens.content.aurora.rememberAuroraPreferences()
     val auroraLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    LaunchedEffect(petController, auroraAuto, auroraPrefs, auroraLifecycle) {
+    LaunchedEffect(petController, auroraAuto, auroraPrefs.actions, auroraPrefs.interval, auroraLifecycle) {
         if (auroraAuto && auroraPrefs.actions) {
             auroraLifecycle.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+                // Resume with a smooth idle pose; changing sky sliders does not reset actions.
+                petController.playAnimation(PetAnimation.Idle)
                 var last = -1
                 kotlinx.coroutines.delay(auroraPrefs.interval * 1000L)
                 while (true) {
@@ -83,7 +85,8 @@ def apply(root):
  for p in (j/'ui/screens/content/aurora').glob('*.kt'):
   if p.name=='AuroraIdentityCard.kt':
    s=p.read_text().replace('AuroraLauncher 安卓','AuroraLauncher 安卓').replace('"Aurora 更新"','"发布记录"');p.write_text(s)
- (m/'src/main/assets/AURORA_CHANNEL.json').write_text(json.dumps({'repo':'reunionSama/AuroraLauncher-Android','version_code':200049,'motion_count':20,'interval_seconds':15,'build_time':__import__('time').time_ns()//1000000}))
+ (m/'src/main/assets/AURORA_CHANNEL.json').write_text(json.dumps({'repo':'reunionSama/AuroraLauncher-Android','version_code':200050,'motion_count':20,'interval_seconds':15,'build_time':__import__('time').time_ns()//1000000}))
  info=m/'src/main/assets/AURORA_BUILD_INFO.json'
- meta=json.loads(info.read_text());meta['version']='alpha4';meta['aurora_additions']+=['aurora-sky','twenty-skeleton-gestures','in-app-downloader'];info.write_text(json.dumps(meta,ensure_ascii=False,indent=2))
+ meta=json.loads(info.read_text());meta['version']='alpha5';meta['aurora_additions']+=['aurora-sky','twenty-skeleton-gestures','in-app-downloader'];info.write_text(json.dumps(meta,ensure_ascii=False,indent=2))
  print('Applied Aurora Alpha4 motion, sky, personalization and native update integration.')
+

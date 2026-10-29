@@ -16,8 +16,8 @@ values = {
     'launcher_app_name': 'AuroraLauncher',
     'launcher_short_name': 'Aurora',
     'url_home': 'https://github.com/reunionSama/AuroraLauncher-Android',
-    'launcher_version_name': '2.7.2-Aurora-alpha4',
-    'launcher_version_code': '200049',
+    'launcher_version_name': '2.7.2-Aurora-alpha5',
+    'launcher_version_code': '200050',
     'default_store_password': 'android',
     'default_key_password': 'android',
 }
@@ -107,7 +107,7 @@ if 'BuildKeys.OAUTH_CLIENT_ID' in auth or auth.count('append("client_id", AURORA
     'signature_note': 'CI test-signed; final deliverable is locally re-signed with a private persistent key.'
 }, ensure_ascii=False, indent=2), 'utf-8')
 
-notice = '''AuroraLauncher Alpha4
+notice = '''AuroraLauncher Alpha5
 Android adaptation/build recipe: reunionSama (2026).
 Based on Zalith Launcher 2, copyright (C) 2025-2026 MovTery and contributors,
 and its credited PojavLauncher/native renderer/runtime dependencies.
@@ -142,3 +142,4 @@ apply(root)
 
 from upgrade4 import apply as apply4
 apply4(root)
+

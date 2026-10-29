@@ -2,8 +2,8 @@
 package com.movtery.zalithlauncher.ui.screens.content.aurora
 
 import android.content.SharedPreferences
-import android.os.SystemClock
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -34,34 +35,56 @@ internal data class AuroraPreferences(val sky:Boolean=true,val actions:Boolean=t
 
 @Composable fun AuroraSky(visible:Boolean) {
  val prefs=rememberAuroraPreferences();val life=LocalLifecycleOwner.current
- var time by remember { mutableFloatStateOf(0f) }
- LaunchedEffect(visible,prefs,life) {
-  if(visible && prefs.sky) life.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-   val start=SystemClock.elapsedRealtime()
-   while(true) {time=(SystemClock.elapsedRealtime()-start)/1000f;delay(if(prefs.high)33L else 66L)}
-  }
- }
- if(!prefs.sky) return
- Canvas(Modifier.fillMaxSize()) {
-  val w=size.width;val h=size.height;val t=time*(.15f+prefs.speed*.7f)
-  drawRect(Brush.verticalGradient(listOf(Color(0xFF030C1B),Color(0xFF092635),Color(0xFF091B27))))
-  repeat(110) {i->val x=((i*7919%1000)/1000f)*w;val y=((i*3571%1000)/1500f)*h
-   drawCircle(Color.White.copy(alpha=(.2f+.4f*(.5f+.5f*sin(t+i))).coerceIn(0f,1f)),if(i%9==0)1.4f else .7f,Offset(x,y))}
-  val n=if(prefs.high)240 else 90
-  repeat(4) {layer->
-   for(i in 0 until n) {
-    val u=i.toFloat()/n;val x=u*w
-    val fold=sin(u*8f+t*.55f+layer)+.35f*sin(u*21f-t*.3f+layer*2f)
-    val top=h*(.13f+layer*.07f)+h*.1f*fold
-    val bottom=(top+h*(.28f+.07f*sin(u*13f+t+layer))).coerceAtMost(h*.87f)
-    val color=Color.hsv(125f+prefs.hue*120f+layer*18f,.7f,.95f)
-    val alpha=(prefs.brightness*(.14f+.19f*(.5f+.5f*sin(u*37f+t+layer)))).coerceIn(0f,.65f)
-    drawRect(Brush.verticalGradient(listOf(Color.Transparent,color.copy(alpha=alpha*.25f),color.copy(alpha=alpha),Color.Transparent),top,bottom),Offset(x,top),androidx.compose.ui.geometry.Size(w/n+1f,bottom-top),blendMode=BlendMode.Plus)
+ // Read state only during drawing; cache gradients, geometry and paints.
+ val drawClock=remember { mutableFloatStateOf(0f) }
+ // Keep low mode's draw invalidation at <=30 FPS while preserving continuous phase.
+ LaunchedEffect(visible,prefs.sky,prefs.high,life) {
+  if(visible && prefs.sky)life.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+   var previous=0L;var elapsed=drawClock.floatValue;var drawn=0L
+   while(true)withFrameNanos { now ->
+    if(previous!=0L)elapsed+=((now-previous)/1_000_000_000f).coerceAtMost(.1f)
+    previous=now
+    if(now-drawn >= if(prefs.high)15_000_000L else 30_000_000L){drawClock.floatValue=elapsed;drawn=now}
    }
   }
-  val mountain=Path().apply {moveTo(0f,h);lineTo(0f,h*.89f);for(i in 0..48){val u=i/48f;lineTo(u*w,h*(.82f-.06f*sin(u*15f)-.02f*cos(u*47f)))};lineTo(w,h);close()}
-  drawPath(mountain,Color(0xFF050E19))
  }
+ Box(Modifier.fillMaxSize().drawWithCache {
+  val w=size.width;val h=size.height
+  val sky=Brush.verticalGradient(listOf(Color(0xFF030C1B),Color(0xFF092635),Color(0xFF091B27)))
+  val stars=Array(110){i->Offset(((i*7919%1000)/1000f)*w,((i*3571%1000)/1500f)*h)}
+  val paints=Array(4){layer->
+   val color=Color.hsv(125f+prefs.hue*120f+layer*18f,.7f,.95f)
+   android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+    shader=android.graphics.LinearGradient(0f,0f,0f,1f,intArrayOf(android.graphics.Color.TRANSPARENT,color.copy(alpha=.25f).toArgb(),color.toArgb(),android.graphics.Color.TRANSPARENT),floatArrayOf(0f,.35f,.7f,1f),android.graphics.Shader.TileMode.CLAMP)
+    xfermode=android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.ADD)
+   }
+  }
+  val matrix=android.graphics.Matrix()
+  val mountain=Path().apply {moveTo(0f,h);lineTo(0f,h*.89f);for(i in 0..48){val u=i/48f;lineTo(u*w,h*(.82f-.06f*sin(u*15f)-.02f*cos(u*47f)))};lineTo(w,h);close()}
+  val n=if(prefs.high)180 else 72;val column=w/n
+  onDrawBehind {
+   val t=drawClock.floatValue*(.15f+prefs.speed*.7f)
+   drawRect(sky)
+   repeat(stars.size){i->drawCircle(Color.White.copy(alpha=(.2f+.4f*(.5f+.5f*sin(t+i))).coerceIn(0f,1f)),if(i%9==0)1.4f else .7f,stars[i])}
+   drawIntoCanvas { surface ->
+    val canvas=surface.nativeCanvas
+    repeat(4){layer->
+     val paint=paints[layer]
+     for(i in 0 until n){
+      val u=i.toFloat()/n;val x=u*w
+      val fold=sin(u*8f+t*.55f+layer)+.35f*sin(u*21f-t*.3f+layer*2f)
+      val top=h*(.13f+layer*.07f)+h*.1f*fold
+      val bottom=(top+h*(.28f+.07f*sin(u*13f+t+layer))).coerceAtMost(h*.87f)
+      paint.alpha=(255*prefs.brightness*(.14f+.19f*(.5f+.5f*sin(u*37f+t+layer)))).toInt().coerceIn(0,166)
+      matrix.setScale(1f,bottom-top);matrix.postTranslate(0f,top)
+      paint.shader.setLocalMatrix(matrix)
+      canvas.drawRect(x,top,x+column+1f,bottom,paint)
+     }
+    }
+   }
+   drawPath(mountain,Color(0xFF050E19))
+  }
+ })
 }
 
 @Composable fun AuroraHomeControls(modifier:Modifier=Modifier) {
@@ -78,7 +101,7 @@ internal data class AuroraPreferences(val sky:Boolean=true,val actions:Boolean=t
    Text("极光亮度");Slider(prefs.brightness,{p.edit().putFloat("brightness",it).apply()})
    Text("光幕速度");Slider(prefs.speed,{p.edit().putFloat("speed",it).apply()})
    Text("极光配色");Slider(prefs.hue,{p.edit().putFloat("hue",it).apply()})
-   Row {Text("高清 30 FPS（关闭为省电模式）",Modifier.weight(1f));Switch(prefs.high,{setBool("high",it)})}
+   Row {Text("流畅 60 FPS（关闭为省电 30 FPS）",Modifier.weight(1f));Switch(prefs.high,{setBool("high",it)})}
    Row {Text("检测新版后自动下载",Modifier.weight(1f));Switch(prefs.autoDownload,{setBool("autoDownload",it)})}
    Text("左右拖动人物可旋转。离开主页或切到后台，极光停止绘制。",style=MaterialTheme.typography.bodySmall)
   }
@@ -108,3 +131,4 @@ internal data class AuroraPreferences(val sky:Boolean=true,val actions:Boolean=t
  val scope=rememberCoroutineScope()
  FilledTonalButton(onClick={checkAuroraUpdate(context,scope,force=true)}){Text("检查更新")}
 }
+

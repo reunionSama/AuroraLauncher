@@ -44,38 +44,50 @@ internal fun parseRelease(body:String,currentAlpha:Int,buildTime:Long,installedD
 }
 
 fun checkAuroraUpdate(context:Context,scope:CoroutineScope,force:Boolean=false) {
- if(!checking.compareAndSet(false,true))return
- scope.launch {
+ val throttle=context.getSharedPreferences("aurora_update_check",0)
+ if(!force && System.currentTimeMillis()-throttle.getLong("attempt",0)<180000)return
+ if(!checking.compareAndSet(false,true)) {
+  if(force)Toast.makeText(context,"正在检查更新，请稍候…",Toast.LENGTH_SHORT).show()
+  return
+ }
+ throttle.edit().putLong("attempt",System.currentTimeMillis()).apply()
+ scope.launch(start=CoroutineStart.UNDISPATCHED) {
   try {
-   val result=withContext(Dispatchers.IO){runCatching{
-    val c=URL("https://api.github.com/repos/reunionSama/AuroraLauncher-Android/releases?per_page=10").openConnection() as HttpURLConnection
-    try{c.connectTimeout=6000;c.readTimeout=6000;c.setRequestProperty("User-Agent","AuroraLauncher/alpha4");check(c.responseCode==200){"HTTP ${c.responseCode}"}
-     val json=c.inputStream.bufferedReader().use{it.readText()};check(json.length<2*1024*1024)
-     val buildTime=context.assets.open("AURORA_CHANNEL.json").bufferedReader().use{Json.parseToJsonElement(it.readText()).jsonObject["build_time"]!!.jsonPrimitive.long}
-     val currentAlpha=Regex("alpha(\\d+)").find(BuildConfig.VERSION_NAME)?.groupValues?.get(1)?.toIntOrNull()?:4
-     val ignored=context.getSharedPreferences("aurora_update_rejected",0).getStringSet("ids",emptySet())!!.toSet()
-     val prefs=context.getSharedPreferences("aurora_update_digest",0)
-     val cacheKey="${BuildConfig.VERSION_CODE}:${context.packageManager.getPackageInfo(context.packageName,0).lastUpdateTime}"
-     val installedDigest=if(json.contains("AuroraLauncher.apk",true))prefs.getString(cacheKey,null)?:run {
-      val md=MessageDigest.getInstance("SHA-256")
-      File(context.applicationInfo.sourceDir).inputStream().use { input ->
-       val buffer=ByteArray(65536)
-       while(true){val n=input.read(buffer);if(n<0)break;md.update(buffer,0,n)}
-      }
-      val hash="sha256:"+md.digest().joinToString(""){"%02x".format(it)}
-      prefs.edit().putString(cacheKey,hash).apply();hash
-     }else ""
-     parseRelease(json,currentAlpha,buildTime,installedDigest,ignored)
-    }finally{c.disconnect()}
-   }}
-   val release=result.getOrNull()
-   if(release!=null){
+   if(force)Toast.makeText(context,"正在检查更新…",Toast.LENGTH_SHORT).show()
+   val feed=AuroraUpdateNetwork(context).fetch()
+   val release=withContext(Dispatchers.IO) {
+    val buildTime=context.assets.open("AURORA_CHANNEL.json").bufferedReader().use{Json.parseToJsonElement(it.readText()).jsonObject["build_time"]!!.jsonPrimitive.long}
+    val currentAlpha=Regex("alpha(\\d+)").find(BuildConfig.VERSION_NAME)?.groupValues?.get(1)?.toIntOrNull()?:5
+    val ignored=context.getSharedPreferences("aurora_update_rejected",0).getStringSet("ids",emptySet()).orEmpty().toSet()
+    val prefs=context.getSharedPreferences("aurora_update_digest",0)
+    val cacheKey="${BuildConfig.VERSION_CODE}:${context.packageManager.getPackageInfo(context.packageName,0).lastUpdateTime}"
+    val installedDigest=if(feed.json.contains("AuroraLauncher.apk",true))prefs.getString(cacheKey,null)?:run {
+     val md=MessageDigest.getInstance("SHA-256")
+     File(context.applicationInfo.sourceDir).inputStream().use { input ->
+      val buffer=ByteArray(65536)
+      while(true){ensureActive();val n=input.read(buffer);if(n<0)break;md.update(buffer,0,n)}
+     }
+     val hash="sha256:"+md.digest().joinToString(""){"%02x".format(it)}
+     prefs.edit().putString(cacheKey,hash).apply();hash
+    }else ""
+    parseRelease(feed.json,currentAlpha,buildTime,installedDigest,ignored)
+   }
+   if(release!=null && !feed.stale){
     val auto=context.getSharedPreferences("aurora_personal",0).getBoolean("autoDownload",true)
+    val size=if(release.size>0)"${release.size/1048576} MiB" else "由下载器获取"
     AlertDialog.Builder(context).setTitle("AuroraLauncher 更新")
-     .setMessage(release.body.ifBlank{"此发布未填写更新说明。"}+"\n\n下载大小：${release.size/1048576} MiB")
+     .setMessage(release.body.ifBlank{"此发布未填写更新说明。"}+"\n\n下载大小：$size\n来源：${feed.source}")
      .setNegativeButton("稍后",null).setPositiveButton("应用内下载"){_,_->downloadUpdate(context,scope,release)}.show()
-    if(auto) downloadUpdate(context,scope,release)
-   }else if(force) Toast.makeText(context,if(result.isSuccess)"当前已是此发布渠道的新版本" else "更新检查失败，请稍后重试",Toast.LENGTH_LONG).show()
+    if(auto)downloadUpdate(context,scope,release)
+   }else if(force) {
+    val message=if(feed.stale)"本次网络检查未完成，已保留上次成功结果；请联网后重试。" else "检查完成（${feed.source}），当前未发现更新版本。"
+    Toast.makeText(context,message,Toast.LENGTH_LONG).show()
+   }
+  }catch(e:CancellationException){throw e}
+  catch(e:Exception){
+   if(force)AlertDialog.Builder(context).setTitle("更新暂时无法检查")
+    .setMessage(e.message?:"请检查网络后重试。")
+    .setNegativeButton("关闭",null).setPositiveButton("重试"){_,_->checkAuroraUpdate(context,scope,true)}.show()
   }finally{checking.set(false)}
  }
 }
@@ -89,6 +101,12 @@ private fun downloadUpdate(context:Context,scope:CoroutineScope,r:AuroraRelease)
  val file=File(context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS),"AuroraLauncher-update-${r.id}.apk")
  val previous=prefs.getLong("download_id",-1)
  var id=if(prefs.getLong("asset",-2)==r.id)previous else -1
+ if(id>=0) {
+  val reusable=dm.query(DownloadManager.Query().setFilterById(id)).use{c->
+   c.moveToFirst() && c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))!=DownloadManager.STATUS_FAILED
+  }
+  if(!reusable){dm.remove(id);id=-1}
+ }
  if(id<0){
   file.delete()
   id=dm.enqueue(DownloadManager.Request(Uri.parse(r.download)).setTitle("AuroraLauncher 更新").setDescription("在应用内下载新版 APK").setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED).setDestinationUri(Uri.fromFile(file)))
@@ -146,3 +164,4 @@ internal fun validateUpdate(context:Context,file:File,digest:String):String? {
  if(a.isNullOrEmpty()||b.isNullOrEmpty()||a.map{it.toCharsString()}.toSet()!=b.map{it.toCharsString()}.toSet())return "更新包签名不匹配"
  return null
 }
+

@@ -53,5 +53,56 @@ class AuroraDiagnosticsTest {
     @Test fun sameApkDigestIsNotAnUpdate() { assertNull(parseRelease(generic,4,0,"sha256:known")) }
     @Test fun rejectedAssetIsNotDownloadedAgain() { assertNull(parseRelease(generic,4,0,"sha256:other",setOf("99"))) }
     @Test fun newerGenericAssetIsRecognized() { assertEquals(99L,parseRelease(generic,4,0,"sha256:old")?.id) }
-}
 
+    private val atom = """<feed xmlns="http://www.w3.org/2005/Atom"><entry><link href="https://github.com/reunionSama/AuroraLauncher-Android/releases/tag/a6"/><content type="html">&lt;p&gt;修复更新&lt;br&gt;动画优化&lt;/p&gt;</content></entry></feed>"""
+    private val webAssets = """<ul class="Box"><li class="Box-row"><a href="/reunionSama/AuroraLauncher-Android/releases/download/a6/AuroraLauncher.apk">APK</a><span>sha256:${"a".repeat(64)}</span><relative-time datetime="2030-01-01T00:00:00Z"></relative-time></li></ul>"""
+    @Test fun atomPreservesNotesAndLineBreaks() {
+        val entry=parseAuroraAtom(atom).single()
+        assertEquals("修复更新\n动画优化",entry.notes)
+        assertTrue(entry.page.endsWith("/a6"))
+    }
+    @Test fun webFallbackAcceptsOnlyOwnApkAndPreservesDigest() {
+        val entry=parseAuroraAtom(atom).single()
+        val json="["+fallbackRelease(entry,webAssets)+"]"
+        val release=parseRelease(json,5,0)!!
+        assertEquals("sha256:"+"a".repeat(64),release.digest)
+        assertEquals("修复更新\n动画优化",release.body)
+        assertNull(parseRelease(json,5,0,release.digest))
+        assertNull(parseRelease("["+fallbackRelease(entry,webAssets.replace("/reunionSama/","/attacker/"))+"]",5,0))
+    }
+    @Test fun primaryFailureUsesIndependentWebEndpoint() = kotlinx.coroutines.runBlocking {
+        val calls=mutableListOf<String>()
+        val feed=loadAuroraFeeds(read={_,key->calls.add(key);when(key){"api"->throw UpdateHttpError(403);"atom"->atom;else->webAssets}})
+        assertEquals(listOf("api","atom","assets.a6"),calls)
+        assertEquals("GitHub 备用线路",feed.source)
+        assertNotNull(parseRelease(feed.json,5,0))
+    }
+    @Test fun transientPrimaryFailureGetsOneRetry() = kotlinx.coroutines.runBlocking {
+        var calls=0
+        val feed=loadAuroraFeeds(read={_,_->calls++;if(calls==1)throw java.net.SocketTimeoutException() else "[]"})
+        assertEquals(2,calls);assertEquals("[]",feed.json)
+    }
+    @Test fun validPrimaryAvoidsFallback() = kotlinx.coroutines.runBlocking {
+        val calls=mutableListOf<String>()
+        loadAuroraFeeds(read={_,key->calls.add(key);"[]"})
+        assertEquals(listOf("api"),calls)
+    }
+    @Test fun apiCooldownUsesWebWithoutRetryingApi() = kotlinx.coroutines.runBlocking {
+        val calls=mutableListOf<String>()
+        loadAuroraFeeds(false,read={_,key->calls.add(key);if(key=="atom")atom else webAssets})
+        assertFalse(calls.contains("api"))
+    }
+    @Test fun cancellationIsNotReportedAsNetworkFailure() = kotlinx.coroutines.runBlocking {
+        var calls=0
+        try { loadAuroraFeeds(read={_,_->calls++;throw kotlinx.coroutines.CancellationException()});fail("expected cancellation") }
+        catch(_:kotlinx.coroutines.CancellationException){assertEquals(1,calls)}
+    }
+    @Test fun invalidAtomIsNotReportedAsNoUpdates() {
+        try { parseAuroraAtom("<html>Sign in to Wi-Fi</html>");fail("expected format error") }
+        catch(_:IllegalArgumentException){}
+    }
+    @Test fun bothRoutesFailWithAnActionableHint() = kotlinx.coroutines.runBlocking {
+        try { loadAuroraFeeds(read={_,_->throw java.net.UnknownHostException()});fail("expected failure") }
+        catch(e:java.io.IOException){assertTrue(e.message!!.contains("DNS"))}
+    }
+}
