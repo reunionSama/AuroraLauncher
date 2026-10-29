@@ -22,3 +22,4 @@ except Exception as exc:
     result['network_error']=type(exc).__name__+': '+str(exc)
 Path(sys.argv[1]).write_text(json.dumps(result,ensure_ascii=False,indent=2))
 print(json.dumps(result,ensure_ascii=False))
+

@@ -1,0 +1,31 @@
+/* Copyright (C) 2026 reunionSama. SPDX-License-Identifier: GPL-3.0-or-later */
+package com.movtery.zalithlauncher.ui.screens.content.aurora
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.movtery.zalithlauncher.BuildConfig
+import com.movtery.zalithlauncher.R
+
+@Composable
+fun AuroraIdentityCard(modifier: Modifier = Modifier, openLink: (String) -> Unit) {
+    Column(modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF101F2B), Color(0xFF17463F))), RoundedCornerShape(24.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Image(painterResource(R.drawable.img_launcher), contentDescription = "Aurora", modifier = Modifier.size(56.dp))
+        Text("AuroraLauncher", color = Color.White, style = MaterialTheme.typography.headlineMedium)
+        Text("让每次出发更从容 · ${BuildConfig.VERSION_NAME}", color = Color(0xFF9CE8DA))
+        Text("Aurora 项目维护：reunionSama\n本次新增：工具中心、收藏入口、实例备忘、启动前检查、网络诊断、日志速览。", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilledTonalButton(onClick = { openLink("https://github.com/reunionSama/AuroraLauncher") }) { Text("项目主页") }
+            FilledTonalButton(onClick = { openLink("https://github.com/reunionSama/AuroraLauncher/releases") }) { Text("Aurora 更新") }
+        }
+        Text("Android 运行核心基于 Zalith Launcher 2 / PojavLauncher。下方独立列出原作者、贡献者与第三方许可，Aurora 的新增部分不改变其归属。", color = Color(0xFFBED8D6), style = MaterialTheme.typography.bodySmall)
+    }
+}

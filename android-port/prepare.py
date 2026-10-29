@@ -16,8 +16,8 @@ values = {
     'launcher_app_name': 'AuroraLauncher Android',
     'launcher_short_name': 'Aurora',
     'url_home': 'https://github.com/reunionSama/AuroraLauncher',
-    'launcher_version_name': '2.7.2-Aurora-alpha2',
-    'launcher_version_code': '200047',
+    'launcher_version_name': '2.7.2-Aurora-alpha3',
+    'launcher_version_code': '200048',
     'default_store_password': 'android',
     'default_key_password': 'android',
 }
@@ -134,3 +134,7 @@ assets = module / 'src/main/assets'
 assets.mkdir(parents=True, exist_ok=True)
 (assets / 'AURORA_ANDROID_NOTICE.txt').write_text(notice, 'utf-8')
 print('Applied Aurora Android alpha identity and attribution; kept upstream engine and native namespaces.')
+
+
+from redesign import apply
+apply(root)

@@ -1,34 +1,59 @@
-# AuroraLauncher Android alpha build
+# AuroraLauncher Android Alpha3
 
-This branch builds an explicitly identified GPL derivative of Zalith Launcher 2,
-not an EXE wrapper or the desktop Python code repackaged as Android.
-Windows releases and the main branch are unchanged.
+Aurora is a GPL-3.0-or-later derivative of the pinned Zalith Launcher 2 Android
+runtime, not an independent reimplementation of its game engine or an EXE wrapper.
+Upstream commit: `a6b6fb6a63ce22c4e4fa91cc29a4d64286cd0924`.
+Original authorship, third-party credits and license documents are preserved.
+The main branch and Windows release are unchanged.
 
-Pinned upstream: `a6b6fb6a63ce22c4e4fa91cc29a4d64286cd0924`.
+## Aurora additions in Alpha3
 
-The APK uses the upstream Android Java runtime, renderer support, game installer,
-account UI and touch controls. Aurora adaptation adds a distinct application ID,
-name, icon and prominent origin notice. All upstream copyrights, license text,
-credits and third-party notices are retained.
+- A separate responsive workspace with searchable feature shortcuts and persistent favorites.
+- Per-instance local notes, isolated by a digest of the instance path.
+- Explicit preflight checks for architecture, version validity, account selection,
+  memory headroom, storage and Java runtime presence. This does not replace the
+  existing game's full dependency checks and never changes game settings.
+- Concurrent, bounded-time network probes for Modrinth, Mojang, BMCLAPI and
+  Microsoft. These measure small HTTP response latency, not download throughput.
+- A bounded log tail (96 KiB / 160 lines, refreshed every two seconds only while
+  visible) with pause, keyword filter, known-error hints and credential masking.
+  Full original log viewing remains available. Masking is best effort.
+- Searchable navigation for all eight original settings categories and all eight
+  download categories; no category, engine, renderer, touch/gamepad, account,
+  multiplayer, mod, world, shader or export implementation is removed.
+- An Aurora maintainer card separated from upstream authors and licenses.
+  Aurora update links point to Aurora releases rather than another app's APK.
+- The existing customizable home page is preserved.
 
-The first build targets **arm64-v8a / Android 8+**. It is an alpha with a generated
-debug signing key. No physical-device installation or gameplay validation is
-implied. No Microsoft or CurseForge API keys are supplied by this recipe.
+The original deeper feature screens and Android runtime are still upstream-based;
+this is an incremental UI/feature redesign, not a claim that every screen was
+independently rewritten. New files in `overlay/` and `tests/` carry Aurora's
+copyright and the same GPL-compatible license. Modified upstream files keep
+upstream headers.
 
-The workflow builds the APK, verifies its signature and application ID and
-uploads it as an APK artifact. A separate artifact contains the full modified
-corresponding source, applied recipe and build instructions under the original
-licenses. The distributed APK must be accompanied by access to that source.
+## Microsoft login and compatibility
 
-Reproduce on a machine with JDK 21, Android SDK/NDKs and Rust/cargo-ndk as specified
-in `.github/workflows/android-apk.yml`. Apply `prepare.py` to the pinned upstream,
-generate the documented test key and run the recorded Gradle command.
+The owner's public client ID is configured at all three OAuth call sites:
+`785d7402-026c-44d0-ae65-d4b29eb27d3c`. Device-code registration is tested without
+printing/storing codes or signing in to anyone's account. Full Xbox/Minecraft
+login and game launch require phone testing.
 
-## Alpha2: branding and Microsoft registration
+Arm64-v8a, Android 8+. Package `io.github.reunionsama.auroralauncher.android`,
+versionCode `200048`, version name `2.7.2-Aurora-alpha3-debug`.
+The delivered APK is signed with the same private persistent key as Alpha2 so
+it can update Alpha2 in place. CI artifacts use a separate ephemeral test key;
+do not install those on top of the privately signed deliverable.
 
-- Uses the project owner's public OAuth client ID `785d7402-026c-44d0-ae65-d4b29eb27d3c` at all three Microsoft OAuth request call sites.
-- Device-code registration preflight returned HTTP 200; no user login, token polling or account credentials were used by this test. Full Xbox/Minecraft sign-in still needs device testing.
-- Replaces the launcher/about raster image, fallback-density launcher icons, Play Store artwork and the original project-author/sponsor avatar images with Aurora/generic assets. Textual author credits and licenses remain.
-- Uses the same Microsoft v2 token endpoint for refresh; respects the device-flow slowdown interval and reports the initial endpoint's OAuth error code/description.
-- Alpha2 uses `io.github.reunionsama.auroralauncher.android` and versionCode 200047. Alpha1 used an ephemeral test key and `.android.debug`; it can remain installed so its data is not erased. No automatic data migration is claimed.
-- Final delivery is locally re-signed using a private persistent Aurora key. Private keys/passwords are never added to this public repository or workflow artifacts.
+## Reproduction and corresponding source
+
+Use JDK21, Android SDK/NDKs and Rust targets from
+`.github/workflows/android-apk.yml`. Apply `prepare.py` to a clean checkout of
+the pinned upstream (including submodules). It applies identity/authentication
+fixes, then `redesign.py` copies Aurora overlays and patches navigation.
+The workflow builds the ARM64 APK, runs seven focused log-diagnostic tests,
+checks signature/package and publishes the full modified corresponding source,
+including native submodules, recipe, build configuration and license notices.
+Private signing credentials are excluded.
+
+No physical-phone install, complete sign-in, multiplayer session or gameplay
+verification is claimed by CI compilation or local APK signature verification.

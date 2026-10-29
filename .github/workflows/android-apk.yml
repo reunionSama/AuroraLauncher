@@ -68,6 +68,9 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew ZalithLauncher:assembleDebug -Darch=arm64 --stacktrace --no-daemon --max-workers=2
+      - name: Test Aurora log diagnostics
+        working-directory: engine
+        run: ./gradlew ZalithLauncher:testDebugUnitTest -Darch=arm64 --tests '*AuroraDiagnosticsTest' --stacktrace --no-daemon --max-workers=2
       - name: Verify and collect APK
         run: |
           mkdir -p deliverables
@@ -78,8 +81,9 @@ jobs:
           aapt=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
           "$aapt" dump badging "$apk" | tee deliverables/package-check.txt
           grep -q 'io.github.reunionsama.auroralauncher' deliverables/package-check.txt
-          cp "$apk" deliverables/AuroraLauncher-Android-arm64-alpha2.apk
+          cp "$apk" deliverables/AuroraLauncher-Android-arm64-alpha3.apk
           sha256sum deliverables/*.apk > deliverables/SHA256SUMS
+          cp engine/ZalithLauncher/build/test-results/testDebugUnitTest/TEST-*AuroraDiagnosticsTest.xml deliverables/
           cp engine/AURORA_ANDROID_NOTICE.txt engine/AURORA_BRANDING_AUDIT.json engine/OAUTH_PREFLIGHT.json deliverables/
       - name: Package corresponding modified source
         run: |
@@ -100,3 +104,4 @@ jobs:
           path: Aurora-Android-corresponding-source.tar.gz
           retention-days: 30
           if-no-files-found: error
+

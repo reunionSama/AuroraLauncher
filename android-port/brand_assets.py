@@ -59,3 +59,4 @@ def replace_branding(module):
     audit={'replaced_raster_resources':sorted(outputs),'original_resource_digests':originals,'leftover_original_images':leftovers}
     (module.parent/'AURORA_BRANDING_AUDIT.json').write_text(json.dumps(audit,indent=2))
     return audit
+
