@@ -47,7 +47,7 @@ internal data class AuroraPreferences(val sky:Boolean=true,val actions:Boolean=t
   drawRect(Brush.verticalGradient(listOf(Color(0xFF030C1B),Color(0xFF092635),Color(0xFF091B27))))
   repeat(110) {i->val x=((i*7919%1000)/1000f)*w;val y=((i*3571%1000)/1500f)*h
    drawCircle(Color.White.copy(alpha=(.2f+.4f*(.5f+.5f*sin(t+i))).coerceIn(0f,1f)),if(i%9==0)1.4f else .7f,Offset(x,y))}
-  val n=if(prefs.high)150 else 75
+  val n=if(prefs.high)240 else 90
   repeat(4) {layer->
    for(i in 0 until n) {
     val u=i.toFloat()/n;val x=u*w
@@ -101,4 +101,10 @@ internal data class AuroraPreferences(val sky:Boolean=true,val actions:Boolean=t
    TextButton(onClick={openLink("https://github.com/reunionSama/AuroraLauncher-Android")}){Text("Aurora 源码与许可记录")}
   }
  }
+}
+
+@Composable fun AuroraUpdateButton() {
+ val context=LocalContext.current
+ val scope=rememberCoroutineScope()
+ FilledTonalButton(onClick={checkAuroraUpdate(context,scope,force=true)}){Text("检查更新")}
 }
