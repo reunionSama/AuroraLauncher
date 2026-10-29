@@ -34,6 +34,14 @@ try:
             nodes=list(tree.iter('node'))
             tool=next((n for n in nodes if 'Aurora 工具' in (n.get('text','')+n.get('content-desc',''))),None)
             if tool is not None:
+                with (out/'home.png').open('wb') as f:subprocess.run(['adb','exec-out','screencap','-p'],stdout=f,check=True)
+                custom=next((n for n in nodes if n.get('text')=='极光与个性化'),None)
+                report['aurora_home_visible']=custom is not None
+                if custom is not None:
+                    tap(custom);time.sleep(1)
+                    tree=snapshot()
+                    report['personalization_opened']=tree is not None and any('让 Aurora 更像你的启动器' in n.get('text','') for n in tree.iter('node'))
+                    adb('shell','input','keyevent','4');time.sleep(1)
                 tap(tool);time.sleep(2)
                 tree=snapshot()
                 if tree is not None and any('我的工作台' in n.get('text','') for n in tree.iter('node')):

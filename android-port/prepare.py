@@ -107,7 +107,7 @@ if 'BuildKeys.OAUTH_CLIENT_ID' in auth or auth.count('append("client_id", AURORA
     'signature_note': 'CI test-signed; final deliverable is locally re-signed with a private persistent key.'
 }, ensure_ascii=False, indent=2), 'utf-8')
 
-notice = '''AuroraLauncher Android Alpha3
+notice = '''AuroraLauncher Alpha4
 Android adaptation/build recipe: reunionSama (2026).
 Based on Zalith Launcher 2, copyright (C) 2025-2026 MovTery and contributors,
 and its credited PojavLauncher/native renderer/runtime dependencies.

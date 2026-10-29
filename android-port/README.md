@@ -60,3 +60,22 @@ Private signing credentials are excluded.
 No physical-phone install, complete sign-in, multiplayer session or gameplay
 verification is claimed by CI compilation or local APK signature verification.
 
+
+## Alpha4
+
+App label and final asset: AuroraLauncher / AuroraLauncher.apk. Same application ID
+and private Alpha2 signing key preserve upgrade compatibility. Native procedural
+skeleton adds 20 distinct poses; home enables drag-to-yaw and 15-second randomized
+gestures. New aurora sky is drawn at screen resolution, with 30/15 FPS, brightness,
+hue, speed and on/off controls. This is a procedural visual effect, not filmed footage.
+Main About removes donor/logo cards and consolidates attribution and all library
+licenses into an expandable section; original headers and notices remain.
+
+Update source is reunionSama/AuroraLauncher-Android releases, with raw GitHub release
+body shown in-app. Startup and game launch check the feed; new APK downloads use
+Android DownloadManager, support cancellation and survive activity recreation.
+Before install: optional GitHub SHA256, same package, higher version and same
+signing certificate are required. Android permission and package installation
+still require user interaction. Unknown newer generic APKs are recognized using
+asset update time and validated by their actual package metadata after downloading.
+No artificial update is published merely to exercise this feature.

@@ -21,7 +21,7 @@ fun AuroraIdentityCard(modifier: Modifier = Modifier, openLink: (String) -> Unit
         Image(painterResource(R.drawable.img_launcher), contentDescription = "Aurora", modifier = Modifier.size(56.dp))
         Text("AuroraLauncher", color = Color.White, style = MaterialTheme.typography.headlineMedium)
         Text("让每次出发更从容 · ${BuildConfig.VERSION_NAME}", color = Color(0xFF9CE8DA))
-        Text("Aurora 项目维护：reunionSama\n本次新增：工具中心、收藏入口、实例备忘、启动前检查、网络诊断、日志速览。", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+        Text("Aurora 项目维护：reunionSama\nAurora 特色：极光主页、可旋转角色、20 种动作、个性化选项、工具中心及应用内更新。", color = Color.White, style = MaterialTheme.typography.bodyMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilledTonalButton(onClick = { openLink("https://github.com/reunionSama/AuroraLauncher") }) { Text("项目主页") }
             FilledTonalButton(onClick = { openLink("https://github.com/reunionSama/AuroraLauncher/releases") }) { Text("Aurora 更新") }

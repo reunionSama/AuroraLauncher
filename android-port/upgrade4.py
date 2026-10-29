@@ -33,14 +33,15 @@ def apply(root):
         if (auroraAuto && auroraPrefs.actions) {
             auroraLifecycle.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
                 var last = -1
+                kotlinx.coroutines.delay(auroraPrefs.interval * 1000L)
                 while (true) {
-                    kotlinx.coroutines.delay(auroraPrefs.interval * 1000L)
                     var next = kotlin.random.Random.nextInt(20)
                     if (next == last) next = (next + 1) % 20
                     last = next
                     petController.playAnimation(PetAnimation.entries[next + 2], headFollow = false)
                     kotlinx.coroutines.delay(3200)
                     petController.playAnimation(PetAnimation.Idle)
+                    kotlinx.coroutines.delay((auroraPrefs.interval * 1000L - 3200L).coerceAtLeast(500L))
                 }
             }
         } else if (auroraAuto) petController.playAnimation(PetAnimation.Idle)
@@ -81,4 +82,6 @@ def apply(root):
   if p.name=='AuroraIdentityCard.kt':
    s=p.read_text().replace('AuroraLauncher 安卓','AuroraLauncher 安卓').replace('"Aurora 更新"','"发布记录"');p.write_text(s)
  (m/'src/main/assets/AURORA_CHANNEL.json').write_text(json.dumps({'repo':'reunionSama/AuroraLauncher-Android','version_code':200049,'motion_count':20,'interval_seconds':15,'build_time':__import__('time').time_ns()//1000000}))
+ info=m/'src/main/assets/AURORA_BUILD_INFO.json'
+ meta=json.loads(info.read_text());meta['version']='alpha4';meta['aurora_additions']+=['aurora-sky','twenty-skeleton-gestures','in-app-downloader'];info.write_text(json.dumps(meta,ensure_ascii=False,indent=2))
  print('Applied Aurora Alpha4 motion, sky, personalization and native update integration.')

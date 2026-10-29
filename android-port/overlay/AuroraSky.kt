@@ -94,6 +94,10 @@ internal data class AuroraPreferences(val sky:Boolean=true,val actions:Boolean=t
    Text("Zalith Launcher 2：MovTery 及贡献者；PojavLauncher 及贡献者。GPL-3.0-or-later。第三方组件依照各自许可分发。")
    TextButton(onClick={openLink("https://github.com/ZalithLauncher/ZalithLauncher2")}){Text("上游核心与完整贡献记录")}
    TextButton(onClick={openLicense(com.movtery.zalithlauncher.R.raw.lgpl_3_license)}){Text("LGPL 许可")}
+   com.movtery.zalithlauncher.library.libraryData.forEach { info ->
+    Text(info.name + "\n" + (info.copyrightInfo ?: ""))
+    TextButton(onClick={openLicense(info.license.raw)}){Text(info.license.name)}
+   }
    TextButton(onClick={openLink("https://github.com/reunionSama/AuroraLauncher-Android")}){Text("Aurora 源码与许可记录")}
   }
  }
