@@ -24,7 +24,7 @@ fun AuroraIdentityCard(modifier: Modifier = Modifier, openLink: (String) -> Unit
         Text("Aurora 项目维护：reunionSama\nAurora 特色：极光主页、可旋转角色、20 种动作、个性化选项、工具中心及应用内更新。", color = Color.White, style = MaterialTheme.typography.bodyMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilledTonalButton(onClick = { openLink("https://github.com/reunionSama/AuroraLauncher") }) { Text("项目主页") }
-            FilledTonalButton(onClick = { openLink("https://github.com/reunionSama/AuroraLauncher/releases") }) { Text("Aurora 更新") }
+            AuroraUpdateButton()
         }
         Text("Android 运行核心基于 Zalith Launcher 2 / PojavLauncher。下方独立列出原作者、贡献者与第三方许可，Aurora 的新增部分不改变其归属。", color = Color(0xFFBED8D6), style = MaterialTheme.typography.bodySmall)
     }
