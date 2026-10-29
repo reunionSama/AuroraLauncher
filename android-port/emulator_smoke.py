@@ -50,7 +50,7 @@ try:
             # Only consent to the displayed local GPL component setup, or dismiss first-run guides.
             for n in nodes:
                 text=n.get('text','').strip().lower()
-                if text in {'agree and continue','同意并继续','我已阅读并同意','同意','agree','i agree','skip','跳过','稍后','later','我知道了','got it'}:
+                if text in {'agree and continue','同意并继续','我已阅读并同意','同意','agree','i agree','skip','跳过','稍后','later','我知道了','got it','install','安装','next','下一步','cancel','取消'}:
                     tap(n);break
         if not adb('shell','pidof',pkg).strip():raise RuntimeError('Launcher process exited; see logcat.')
         time.sleep(2)
@@ -63,4 +63,4 @@ finally:
     if tree is not None:(out/'last-ui.xml').write_text(ET.tostring(tree,encoding='unicode'))
     (out/'smoke-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     print(json.dumps(report,ensure_ascii=False))
-if not report['tool_screen_reached']:sys.exit(1)
+if not report['tool_screen_reached'] or any(report.get(k) is not True for k in ['启动前检查','网络诊断','日志速览']):sys.exit(1)

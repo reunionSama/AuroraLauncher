@@ -107,7 +107,7 @@ if 'BuildKeys.OAUTH_CLIENT_ID' in auth or auth.count('append("client_id", AURORA
     'signature_note': 'CI test-signed; final deliverable is locally re-signed with a private persistent key.'
 }, ensure_ascii=False, indent=2), 'utf-8')
 
-notice = '''AuroraLauncher Android Alpha2
+notice = '''AuroraLauncher Android Alpha3
 Android adaptation/build recipe: reunionSama (2026).
 Based on Zalith Launcher 2, copyright (C) 2025-2026 MovTery and contributors,
 and its credited PojavLauncher/native renderer/runtime dependencies.
@@ -123,8 +123,8 @@ This is an experimental Android derivative using a mature Android Java Edition
 engine. The Python/Qt Windows EXE and its DLL files are NOT included or executed.
 It does not reproduce all of Aurora's Windows UI or its exact implementation.
 The CI APK is test-signed. The delivered APK is re-signed locally with a persistent
-private Aurora key. This alpha2 has a distinct package ID so alpha1 can remain
-installed and its data is not deleted or automatically migrated.
+private Aurora key. Alpha3 retains the Alpha2 package and signing key for updates.
+Alpha1 has a distinct package ID and no automatic data migration is claimed.
 Arm64 build: Android 8.0+ on 64-bit ARM devices only. No physical-device or
 Minecraft gameplay test is claimed by the build. Microsoft login additionally
 requires an application configuration accepted by Microsoft's services.
