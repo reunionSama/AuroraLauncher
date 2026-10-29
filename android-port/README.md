@@ -22,7 +22,8 @@ The main branch and Windows release are unchanged.
   download categories; no category, engine, renderer, touch/gamepad, account,
   multiplayer, mod, world, shader or export implementation is removed.
 - An Aurora maintainer card separated from upstream authors and licenses.
-  Aurora update links point to Aurora releases rather than another app's APK.
+  Automatic update checks accept only Aurora ARM64 Android Alpha assets from this repository; Windows and upstream APKs are excluded.
+  Aurora update links point to Aurora releases.
 - Aurora teal is the default on fresh installs; saved themes and all original theme choices remain.
 - The existing customizable home page is preserved.
 
@@ -51,7 +52,7 @@ Use JDK21, Android SDK/NDKs and Rust targets from
 `.github/workflows/android-apk.yml`. Apply `prepare.py` to a clean checkout of
 the pinned upstream (including submodules). It applies identity/authentication
 fixes, then `redesign.py` copies Aurora overlays and patches navigation.
-The workflow builds the ARM64 APK, runs seven focused log-diagnostic tests,
+The workflow builds the ARM64 APK, runs eight focused diagnostic/update tests,
 checks signature/package and publishes the full modified corresponding source,
 including native submodules, recipe, build configuration and license notices.
 Private signing credentials are excluded.
