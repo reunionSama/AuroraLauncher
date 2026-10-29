@@ -77,7 +77,7 @@ internal data class AuroraPreferences(val sky:Boolean=true,val actions:Boolean=t
       val bottom=(top+h*(.28f+.07f*sin(u*13f+t+layer))).coerceAtMost(h*.87f)
       paint.alpha=(255*prefs.brightness*(.14f+.19f*(.5f+.5f*sin(u*37f+t+layer)))).toInt().coerceIn(0,166)
       matrix.setScale(1f,bottom-top);matrix.postTranslate(0f,top)
-      paint.shader.setLocalMatrix(matrix)
+      paint.shader?.setLocalMatrix(matrix)
       canvas.drawRect(x,top,x+column+1f,bottom,paint)
      }
     }
