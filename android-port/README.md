@@ -23,6 +23,7 @@ The main branch and Windows release are unchanged.
   multiplayer, mod, world, shader or export implementation is removed.
 - An Aurora maintainer card separated from upstream authors and licenses.
   Aurora update links point to Aurora releases rather than another app's APK.
+- Aurora teal is the default on fresh installs; saved themes and all original theme choices remain.
 - The existing customizable home page is preserved.
 
 The original deeper feature screens and Android runtime are still upstream-based;

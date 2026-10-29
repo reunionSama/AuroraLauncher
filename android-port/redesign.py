@@ -28,7 +28,7 @@ def apply(root):
     edit(main, 'import androidx.compose', 'import androidx.compose') if False else None
     edit(main, 'import com.movtery.zalithlauncher.ui.screens.content.SettingsScreen', 'import com.movtery.zalithlauncher.ui.screens.content.aurora.AuroraToolsScreen\nimport com.movtery.zalithlauncher.ui.screens.content.SettingsScreen')
     edit(main, '                toSettingsScreen = {', '''                toAuroraTools = {
-                    screenBackStackModel.mainScreen.navigateOnce(NormalNavKey.AuroraTools)
+                    screenBackStackModel.mainScreen.navigateTo(NormalNavKey.AuroraTools, useClassEquality = true)
                 },
                 toSettingsScreen = {''')
     edit(main, '    toSettingsScreen: () -> Unit,', '    toSettingsScreen: () -> Unit,\n    toAuroraTools: () -> Unit,')
@@ -72,12 +72,18 @@ def apply(root):
                                 "multiplayer" -> screenBackStackModel.mainScreen.navigateTo(NormalNavKey.Multiplayer)
                                 "account" -> screenBackStackModel.mainScreen.navigateTo(NormalNavKey.AccountManager())
                                 "files" -> eventViewModel.sendEvent(EventViewModel.Event.OpenFileManager(rootPath = PathManager.DIR_FILES_EXTERNAL.absolutePath))
+                                else -> Unit
                             }
                         }
                     )
                 }
 '''
     edit(main, '                entry<NormalNavKey.LauncherMain> {', entry + '                entry<NormalNavKey.LauncherMain> {')
+    viewmodel = java / 'viewmodel/ScreenBackStackViewModel.kt'
+    edit(viewmodel, 'NormalNavKey.Multiplayer::class', 'NormalNavKey.Multiplayer::class,\n        NormalNavKey.AuroraTools::class')
+    settings_defaults = java / 'setting/AllSettings.kt'
+    edit(settings_defaults, 'if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) ColorThemeType.DYNAMIC\n        else ColorThemeType.EMBERMIRE', 'ColorThemeType.CUSTOM // Aurora default; all original themes remain selectable.')
+    edit(settings_defaults, 'Color.Blue.toArgb()', 'Color(0xFF09B9CA).toArgb()')
     # Searchable sidebar for BOTH settings and downloads: original categories and nested routes retained.
     for name, selected, items in [('SettingsScreen.kt', 'settingsScreenKey', 'settingItems'), ('DownloadScreen.kt', 'downloadScreenKey', 'downloadItems')]:
         file = java / 'ui/screens/content' / name
@@ -126,7 +132,7 @@ def apply(root):
     info = module / 'src/main/assets/AURORA_BUILD_INFO.json'
     metadata = json.loads(info.read_text())
     metadata['version'] = 'alpha3'
-    metadata['aurora_additions'] = ['workspace', 'shortcut-favorites', 'instance-notes', 'preflight-checks', 'parallel-network-probes', 'bounded-live-log-tail', 'searchable-settings', 'maintainer-and-upstream-separation']
+    metadata['aurora_additions'] = ['workspace', 'shortcut-favorites', 'instance-notes', 'preflight-checks', 'parallel-network-probes', 'bounded-live-log-tail', 'searchable-settings', 'aurora-default-palette', 'maintainer-and-upstream-separation']
     info.write_text(json.dumps(metadata, ensure_ascii=False, indent=2))
     tests = module / 'src/test/java/com/movtery/zalithlauncher/ui/screens/content/aurora'
     tests.mkdir(parents=True, exist_ok=True)
