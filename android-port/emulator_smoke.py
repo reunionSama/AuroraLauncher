@@ -64,3 +64,4 @@ finally:
     (out/'smoke-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     print(json.dumps(report,ensure_ascii=False))
 if not report['tool_screen_reached'] or any(report.get(k) is not True for k in ['启动前检查','网络诊断','日志速览']):sys.exit(1)
+

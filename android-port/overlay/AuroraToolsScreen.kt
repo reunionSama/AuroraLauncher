@@ -321,3 +321,4 @@ internal fun logHint(text: String): String = when {
     text.contains("NoClassDefFoundError", true) -> "可能缺少依赖或模组不兼容：查看完整日志中最早的异常。"
     else -> ""
 }
+

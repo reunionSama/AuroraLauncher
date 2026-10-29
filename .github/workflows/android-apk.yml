@@ -63,6 +63,9 @@ jobs:
           keytool -genkeypair -noprompt -keystore engine/ZalithLauncher/aurora_debug.jks -storepass android -keypass android -alias aurora_android -keyalg RSA -keysize 2048 -validity 3650 -dname 'CN=Aurora Android Alpha, O=reunionSama'
       - name: Check public Microsoft registration
         run: python3 aurora-recipe/android-port/oauth_preflight.py engine/OAUTH_PREFLIGHT.json
+      - name: Test Aurora skeleton gestures
+        working-directory: engine
+        run: cargo test --manifest-path PetLib/rust/Cargo.toml --lib
       - name: Build installable arm64 APK
         working-directory: engine
         run: |
@@ -81,7 +84,7 @@ jobs:
           aapt=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
           "$aapt" dump badging "$apk" | tee deliverables/package-check.txt
           grep -q 'io.github.reunionsama.auroralauncher' deliverables/package-check.txt
-          cp "$apk" deliverables/AuroraLauncher-Android-arm64-alpha3.apk
+          cp "$apk" deliverables/AuroraLauncher.apk
           sha256sum deliverables/*.apk > deliverables/SHA256SUMS
           cp engine/ZalithLauncher/build/test-results/testDebugUnitTest/TEST-*AuroraDiagnosticsTest.xml deliverables/
           cp engine/AURORA_ANDROID_NOTICE.txt engine/AURORA_BRANDING_AUDIT.json engine/OAUTH_PREFLIGHT.json deliverables/
@@ -132,7 +135,7 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: python3 android-port/emulator_smoke.py smoke-apk/AuroraLauncher-Android-arm64-alpha3.apk
+          script: python3 android-port/emulator_smoke.py smoke-apk/AuroraLauncher.apk
       - name: Upload emulator evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -141,3 +144,4 @@ jobs:
           path: smoke-results/
           if-no-files-found: warn
           retention-days: 7
+

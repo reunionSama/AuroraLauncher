@@ -40,12 +40,13 @@ class AuroraDiagnosticsTest {
     }
     @Test fun updaterIgnoresWindowsForeignAndOlderAssets() {
         val json = """[
-          {"html_url":"https://github.com/reunionSama/AuroraLauncher/releases/tag/a4","assets":[{"name":"AuroraLauncher-Android-arm64-alpha4.apk","browser_download_url":"https://github.com/reunionSama/AuroraLauncher/releases/download/a4/app.apk"}]},
+          {"html_url":"https://github.com/reunionSama/AuroraLauncher-Android/releases/tag/a4","assets":[{"name":"AuroraLauncher-Android-arm64-alpha4.apk","browser_download_url":"https://github.com/reunionSama/AuroraLauncher-Android/releases/download/a4/app.apk"}]},
           {"html_url":"https://github.com/someone/other/releases/tag/a99","assets":[{"name":"AuroraLauncher-Android-arm64-alpha99.apk","browser_download_url":"https://github.com/someone/other/releases/download/a99/app.apk"}]},
-          {"html_url":"https://github.com/reunionSama/AuroraLauncher/releases/tag/windows","assets":[{"name":"AuroraLauncher.exe","browser_download_url":"https://github.com/reunionSama/AuroraLauncher/releases/download/windows/app.exe"}]}
+          {"html_url":"https://github.com/reunionSama/AuroraLauncher-Android/releases/tag/windows","assets":[{"name":"AuroraLauncher.exe","browser_download_url":"https://github.com/reunionSama/AuroraLauncher-Android/releases/download/windows/app.exe"}]}
         ]"""
         assertEquals(4, newerAuroraRelease(json, 3)?.alpha)
         assertNull(newerAuroraRelease(json, 4))
     }
     @Test fun missingLogGivesActionableMessage() { assertTrue(readLogTail(null).contains("启动")) }
 }
+

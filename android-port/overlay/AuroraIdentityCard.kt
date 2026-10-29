@@ -29,3 +29,4 @@ fun AuroraIdentityCard(modifier: Modifier = Modifier, openLink: (String) -> Unit
         Text("Android 运行核心基于 Zalith Launcher 2 / PojavLauncher。下方独立列出原作者、贡献者与第三方许可，Aurora 的新增部分不改变其归属。", color = Color(0xFFBED8D6), style = MaterialTheme.typography.bodySmall)
     }
 }
+

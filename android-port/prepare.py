@@ -12,12 +12,12 @@ root = Path(sys.argv[1]).resolve()
 module = root / 'ZalithLauncher'
 properties = module / 'gradle.properties'
 values = {
-    'launcher_name': 'AuroraAndroid',
-    'launcher_app_name': 'AuroraLauncher Android',
+    'launcher_name': 'AuroraLauncher',
+    'launcher_app_name': 'AuroraLauncher',
     'launcher_short_name': 'Aurora',
     'url_home': 'https://github.com/reunionSama/AuroraLauncher',
-    'launcher_version_name': '2.7.2-Aurora-alpha3',
-    'launcher_version_code': '200048',
+    'launcher_version_name': '2.7.2-Aurora-alpha4',
+    'launcher_version_code': '200049',
     'default_store_password': 'android',
     'default_key_password': 'android',
 }
@@ -138,3 +138,7 @@ print('Applied Aurora Android alpha identity and attribution; kept upstream engi
 
 from redesign import apply
 apply(root)
+
+
+from upgrade4 import apply as apply4
+apply4(root)

@@ -34,3 +34,4 @@ fun AuroraSettingsMenu(items: List<CategoryItem>, selected: TitledNavKey?, navig
         Text("分类搜索仅筛选入口\n原有功能与高级选项均保留", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
