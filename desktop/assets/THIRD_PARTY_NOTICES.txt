@@ -1,0 +1,50 @@
+AuroraLauncher Desktop 6.0.0
+Copyright (C) 2026 reunionSama. GPL-3.0-or-later.
+
+This is a new desktop implementation. Its interaction model and twenty procedural
+skeletal gestures are adapted from AuroraLauncher-Android (reunionSama), itself a
+GPL derivative of Zalith Launcher 2 / PojavLauncher. Original source notices and
+credits are retained. No Android APK, Android native renderer, Windows legacy
+Aurora source, ZL2 logo, author avatar, or AzureLauncher code is bundled.
+
+Zalith Launcher 2 — MovTery and contributors, GPL-3.0-or-later.
+https://github.com/ZalithLauncher/ZalithLauncher2
+PojavLauncher — its credited authors and contributors, GPL-3.0-or-later.
+https://github.com/PojavLauncherTeam/PojavLauncher
+Aurora Android — reunionSama, GPL-3.0-or-later.
+https://github.com/reunionSama/AuroraLauncher-Android
+
+minecraft-launcher-lib — JakobDev, BSD-2-Clause.
+https://github.com/JakobDev/minecraft-launcher-lib
+Qt and PySide6 — The Qt Company Ltd and contributors, LGPL-3.0/GPL commercial
+licensing alternatives. This application uses the open-source LGPL distribution.
+The unmodified dynamic Qt libraries are provided by the PySide6 wheel; rebuildable
+application source and the exact dependency versions accompany this project.
+https://www.qt.io/licensing/open-source-lgpl-obligations
+https://code.qt.io/pyside/pyside-setup.git/
+
+Terracotta — burningtnt and contributors, AGPL-3.0-or-later with exception for
+redistribution of an unmodified independent binary and local HTTP IPC integration
+when prominently credited. Downloaded separately from its official release.
+https://github.com/burningtnt/Terracotta
+https://github.com/burningtnt/Terracotta/blob/master/LICENSE
+
+Noto Sans CJK — Adobe / Google and contributors, SIL Open Font License 1.1.
+Full font license: assets/OFL.txt. Original font is redistributed unmodified.
+https://github.com/notofonts/noto-cjk
+
+Requests — Kenneth Reitz and contributors, Apache-2.0.
+cryptography — Python Cryptographic Authority, Apache-2.0 OR BSD-3-Clause.
+Python — Python Software Foundation License.
+PyInstaller — GPL-2.0-or-later with bootloader exception for frozen applications.
+
+Minecraft is a trademark of Mojang/Microsoft. Game files and Java runtimes are
+not included; they are obtained from the official services when requested.
+Aurora's default explorer skin and launcher star icon are original generated assets.
+
+AzureLauncher (D3sp1r4t) was inspected as a small installation/launch workflow
+reference. That repository provides no LICENSE file; none of its code or artwork
+is copied or distributed here.
+
+All corresponding application source, build recipes and changes:
+https://github.com/reunionSama/AuroraLauncher/tree/windows-rebuild-20261030

@@ -1,0 +1,111 @@
+name: Aurora Windows Desktop Rebuild
+on:
+  push:
+    branches: [windows-rebuild-20261030]
+    paths: ['desktop/**', '.github/workflows/windows-rebuild.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aurora-windows-desktop
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 55
+    env:
+      PYTHONUTF8: '1'
+      QT_QUICK_BACKEND: software
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: desktop/requirements-build.txt
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install pinned build dependencies
+        run: python -m pip install -i https://mirrors.aliyun.com/pypi/simple -r requirements-build.txt
+      - name: Prepare original assets and licensed font
+        run: python bootstrap_assets.py
+      - name: Test download integrity, accounts, archives, launch command and gestures
+        run: python -m pytest tests -q --junitxml=../evidence/unit-tests.xml
+      - name: Exercise desktop source UI
+        run: |
+          python main.py --self-test --data-dir "$env:RUNNER_TEMP\aurora-source-test" --test-report ../evidence/source-ui.json --screenshot-dir ../evidence/source-screens
+          if ($LASTEXITCODE -ne 0) { throw 'Source UI smoke failed' }
+      - name: Verify official Terracotta Windows component and local API
+        run: python tests/terracotta_smoke.py "$env:RUNNER_TEMP\aurora-terra-test" ../evidence/terracotta.json
+      - name: Build single Windows executable
+        run: python -m PyInstaller --noconfirm --clean AuroraLauncher.spec
+      - name: Run the actual packaged EXE and exercise every page
+        run: |
+          $p = Start-Process -FilePath dist/AuroraLauncher.exe -ArgumentList @('--self-test','--data-dir',"$env:RUNNER_TEMP\aurora-exe-test",'--test-report',"$pwd\..\evidence\exe-ui.json",'--screenshot-dir',"$pwd\..\evidence\exe-screens") -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "EXE smoke failed: $($p.ExitCode)" }
+          $r = Get-Content ../evidence/exe-ui.json | ConvertFrom-Json
+          if (-not $r.ok -or -not $r.frozen) { throw 'Packaged executable did not pass UI validation' }
+      - name: Provide software OpenGL only for the CI virtual machine
+        run: |
+          curl.exe -fL --retry 3 https://github.com/pal1000/mesa-dist-win/releases/download/26.2.4/mesa3d-26.2.4-release-msvc.7z -o "$env:RUNNER_TEMP\mesa.7z"
+          if ($LASTEXITCODE -ne 0) { throw 'Mesa test dependency download failed' }
+          7z x "$env:RUNNER_TEMP\mesa.7z" "-o$env:RUNNER_TEMP\mesa" -y | Out-Null
+          Get-ChildItem "$env:RUNNER_TEMP\mesa\x64" -Filter *.dll | Copy-Item -Destination "$env:JAVA_HOME\bin" -Force
+          if (-not (Test-Path "$env:JAVA_HOME\bin\opengl32.dll")) { throw 'Software OpenGL was not installed in the temporary Java runtime' }
+      - name: Real Minecraft demo launch through the packaged EXE
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+        run: |
+          $p = Start-Process -FilePath dist/AuroraLauncher.exe -ArgumentList @('--game-smoke','--game-version','1.20.1','--data-dir',"$env:RUNNER_TEMP\aurora-game-test",'--test-report',"$pwd\..\evidence\minecraft-demo.json",'--screenshot-dir',"$pwd\..\evidence\game-screens") -Wait -PassThru
+          Copy-Item "$env:RUNNER_TEMP\aurora-game-test\logs\launcher-latest.log" ../evidence/minecraft-launch.log -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0) { throw "Minecraft demo smoke failed: $($p.ExitCode)" }
+          $r = Get-Content ../evidence/minecraft-demo.json | ConvertFrom-Json
+          if (-not $r.ok -or -not $r.game_window -or -not $r.renderer_initialized) { throw 'A real Minecraft window was not verified' }
+      - name: Collect executable and corresponding source
+        run: |
+          New-Item -ItemType Directory -Force ../deliverables | Out-Null
+          Copy-Item dist/AuroraLauncher.exe ../deliverables/AuroraLauncher.exe
+          Get-FileHash ../deliverables/AuroraLauncher.exe -Algorithm SHA256 | Format-List | Out-File ../deliverables/SHA256.txt -Encoding utf8
+          Copy-Item ../LICENSE ../deliverables/LICENSE.txt
+          Copy-Item assets/THIRD_PARTY_NOTICES.txt ../deliverables/THIRD_PARTY_NOTICES.txt
+          git rev-parse HEAD | Out-File ../deliverables/SOURCE_COMMIT.txt -Encoding utf8
+          python package_source.py
+      - name: Upload tested Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-tested
+          path: deliverables/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload tests, screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-evidence
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve executable for diagnosing failed integration tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-diagnostic-EXE
+          path: desktop/dist/AuroraLauncher.exe
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload corresponding source
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-source
+          path: AuroraLauncher-Desktop-source.zip
+          if-no-files-found: error
+          retention-days: 30

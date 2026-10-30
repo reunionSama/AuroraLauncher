@@ -1,0 +1,13 @@
+__pycache__/
+.pytest_cache/
+.venv/
+build/
+dist/
+evidence/
+deliverables/
+*.pyc
+*.tmp
+desktop/assets/*.otf
+desktop/assets/*.png
+desktop/assets/*.ico
+AuroraLauncher-Desktop-source.zip
