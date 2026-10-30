@@ -85,10 +85,19 @@ def main():
                     finally:QDesktopServices.openUrl=original;backend._set(authCode='',authUrl='')
                 state['index']+=1
                 if state['index']<len(pages):QTimer.singleShot(70,check_page)
-                else:finish()
+                else:
+                    root.setProperty('page','home');root.setWidth(960);root.setHeight(620);QTimer.singleShot(250,check_compact)
+            except Exception as e:finish(str(e))
+        def check_compact():
+            try:
+                from PySide6.QtCore import QPointF
+                launch=root.findChild(QObject,'launchButton');bottom=launch.mapToScene(QPointF(0,launch.height())).y()
+                report['compact_window']=bottom<=root.height()
+                report['toolbar_labels_fit']=bool(root.property('toolbarLabelsFit'))
+                root.grabWindow().save(str(shots/'compact.png'));finish()
             except Exception as e:finish(str(e))
         def finish(error=''):
-            report['warnings']=errors;report['error']=error;report['ok']=not error and all(report['pages'].values()) and report.get('manual_rotation',False) and report.get('sponsor_button',False) and report.get('microsoft_link_button',False)
+            report['warnings']=errors;report['error']=error;report['ok']=not error and all(report['pages'].values()) and report.get('manual_rotation',False) and report.get('sponsor_button',False) and report.get('microsoft_link_button',False) and report.get('compact_window',False) and report.get('toolbar_labels_fit',False)
             if report_path:report_path.parent.mkdir(parents=True,exist_ok=True);report_path.write_text(json.dumps(report,ensure_ascii=False,indent=2),'utf-8')
             root.close();app.exit(0 if report['ok'] else 3)
         root.setWidth(1280);root.setHeight(800)

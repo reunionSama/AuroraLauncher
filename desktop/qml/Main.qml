@@ -12,6 +12,13 @@ ApplicationWindow {
     visible: true; title: "AuroraLauncher"
     color: bg
     property string page: "home"
+    property bool toolbarLabelsFit: {
+        for(var i=0;i<quickNavRepeater.count;i++) {
+            var button=quickNavRepeater.itemAt(i)
+            if(!button || button.contentItem.truncated) return false
+        }
+        return true
+    }
     property var cfg: backend.settings
     property var run: backend.runtime
     property bool reducedMotion: cfg.reduceMotion === true
@@ -85,8 +92,9 @@ ApplicationWindow {
             ColumnLayout { spacing:0;LabelText{text:"AuroraLauncher";font.pixelSize:21;font.bold:true} MutedText{text:root.page==="home"?"让每次出发更从容":"设置与工作区 / "+root.titles[root.page];font.pixelSize:11} }
             Item { Layout.fillWidth:true }
             Repeater {
+                id:quickNavRepeater
                 model:[{p:"versions",t:"▣  版本"},{p:"resources",t:"◇  资源"},{p:"accounts",t:"◎  账号"},{p:"downloads",t:"↓  下载"},{p:"settings",t:"⚙  设置"}]
-                delegate:AButton { required property var modelData; text:modelData.t;implicitWidth:root.width<1100?80:94;primary:root.page===modelData.p;onClicked:root.navigate(modelData.p) }
+                delegate:AButton { required property var modelData; objectName:"quickNav_"+modelData.p;text:root.width<1100?modelData.t.split("  ")[0]:modelData.t;implicitWidth:root.width<1100?56:104;primary:root.page===modelData.p;ToolTip.visible:hovered;ToolTip.text:modelData.t;onClicked:root.navigate(modelData.p) }
             }
         }
     }
