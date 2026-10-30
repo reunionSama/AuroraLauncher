@@ -124,3 +124,28 @@ def test_modern_client_id_xuid_and_quickplay_are_resolved(tmp_path):
     assert CLIENT_ID in args and '123456' in args
     assert '--quickPlayMultiplayer' in args and '127.0.0.1:25565' in args
     assert not any('${' in x for x in args)
+
+def test_versioned_official_terracotta_executable_is_found(tmp_path):
+    from aurora.terracotta import Terracotta
+    target=tmp_path/'terracotta-0.4.2-windows-x86_64.exe';target.write_bytes(b'MZ-test')
+    (tmp_path/'VCRUNTIME140.DLL').write_bytes(b'MZ-dll')
+    assert Terracotta.find_executable(tmp_path)==target
+
+def test_microsoft_device_code_uses_given_client_id_and_retries_timeouts():
+    from aurora.auth import Auth
+    from aurora import CLIENT_ID
+    import requests
+    class Cancel:
+        def is_set(self):return False
+        def wait(self,delay):return False
+    class Response:
+        status_code=200
+        def json(self):return {'device_code':'not-a-real-secret','user_code':'TEST-CODE'}
+    class Session:
+        def __init__(self):self.calls=0;self.data=None
+        def post(self,url,**kw):
+            self.calls+=1;self.data=kw['data']
+            if self.calls<3:raise requests.Timeout('temporary')
+            return Response()
+    a=Auth(Cancel());a.s=Session();assert a.start()['user_code']=='TEST-CODE'
+    assert a.s.calls==3 and a.s.data['client_id']==CLIENT_ID

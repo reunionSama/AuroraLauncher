@@ -9,9 +9,20 @@ SCOPES="XboxLive.signin offline_access"
 class Auth:
     def __init__(self,cancel):
         self.cancel=cancel;self.s=requests.Session();self.s.headers['User-Agent']=USER_AGENT
+    def _post(self,url,**kw):
+        for attempt in range(3):
+            if self.cancel.is_set():raise Cancelled("登录已取消")
+            try:
+                r=self.s.post(url,timeout=(12,30),**kw)
+                if self.cancel.is_set():raise Cancelled("登录已取消")
+                if r.status_code<500 or attempt==2:return r
+            except requests.RequestException as e:
+                if attempt==2:raise RuntimeError("无法连接微软 / Xbox 登录服务，请检查网络后重试") from e
+            if self.cancel.wait(.5*(attempt+1)):raise Cancelled("登录已取消")
+        raise RuntimeError("登录服务暂时不可用")
     def request(self,url,**kw):
         if self.cancel.is_set():raise Cancelled("登录已取消")
-        r=self.s.post(url,timeout=(8,25),**kw)
+        r=self._post(url,**kw)
         try:body=r.json()
         except ValueError:raise RuntimeError(f"登录接口异常 HTTP {r.status_code}")
         if r.status_code>=400:
@@ -24,7 +35,7 @@ class Auth:
         deadline=time.monotonic()+device.get("expires_in",900);interval=max(3,device.get("interval",5))
         while time.monotonic()<deadline:
             if self.cancel.wait(interval):raise Cancelled("登录已取消")
-            r=self.s.post(TENANT+"token",data={"client_id":CLIENT_ID,"grant_type":"urn:ietf:params:oauth:grant-type:device_code","device_code":device["device_code"]},timeout=(8,25))
+            r=self._post(TENANT+"token",data={"client_id":CLIENT_ID,"grant_type":"urn:ietf:params:oauth:grant-type:device_code","device_code":device["device_code"]})
             body=r.json()
             if r.status_code==200:return self.complete(body)
             error=body.get("error")

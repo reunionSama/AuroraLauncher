@@ -9,12 +9,15 @@ TERRA_WIN='https://github.com/burningtnt/Terracotta/releases/download/v0.4.2/ter
 TERRA_SHA256='07ebe139e3ca5f74576e58b1a96efe59abdfbe148d3f1a49bfdca8b6f70745f0'
 class Terracotta:
     def __init__(self,engine):self.e=engine;self.port=0;self.process=None;self.session=uuid.uuid4().hex
+    @staticmethod
+    def find_executable(root):
+        return next((p for p in Path(root).rglob('*') if p.is_file() and p.suffix.lower()=='.exe' and p.name.lower().startswith('terracotta')),None)
     def ensure(self):
         if self.port:
             try:self.state();return
             except Exception:self.port=0
         if sys.platform!='win32':raise RuntimeError("此构建的陶瓦组件面向 Windows；请使用官方对应平台发行包")
-        root=self.e.store.root/'tools'/'terracotta';exe=next(root.rglob('terracotta.exe'),None) if root.exists() else None
+        root=self.e.store.root/'tools'/'terracotta';exe=self.find_executable(root) if root.exists() else None
         if not exe:
             self.e.emit('正在下载官方陶瓦联机组件')
             archive=self.e.store.root/'downloads'/'terracotta-0.4.2.tar.gz'
@@ -30,7 +33,7 @@ class Terracotta:
                     elif member.isfile():
                         p.parent.mkdir(parents=True,exist_ok=True)
                         with tar.extractfile(member) as src,p.open('wb') as out:shutil.copyfileobj(src,out)
-            exe=next(root.rglob('terracotta.exe'),None)
+            exe=self.find_executable(root)
         if not exe:raise RuntimeError('没有找到陶瓦可执行文件')
         self.session=uuid.uuid4().hex
         portfile=self.e.store.root/'cache'/('terra-'+uuid.uuid4().hex+'.json')
