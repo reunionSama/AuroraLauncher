@@ -149,3 +149,8 @@ def test_microsoft_device_code_uses_given_client_id_and_retries_timeouts():
             return Response()
     a=Auth(Cancel());a.s=Session();assert a.start()['user_code']=='TEST-CODE'
     assert a.s.calls==3 and a.s.data['client_id']==CLIENT_ID
+
+def test_game_renderer_readiness_does_not_depend_on_audio_hardware():
+    from aurora.smoke import renderer_ready
+    assert renderer_ready('Backend library: LWJGL\nFailed to initialize audio\nCreated: 1024x1024 atlas')
+    assert not renderer_ready('Backend library: LWJGL\nFailed to create OpenGL context')

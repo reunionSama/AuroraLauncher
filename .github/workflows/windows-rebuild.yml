@@ -8,7 +8,7 @@ permissions:
   contents: read
 concurrency:
   group: aurora-windows-desktop
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   windows:
     runs-on: windows-2022
@@ -64,6 +64,7 @@ jobs:
         env:
           GALLIUM_DRIVER: llvmpipe
           LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
         run: |
           $p = Start-Process -FilePath dist/AuroraLauncher.exe -ArgumentList @('--game-smoke','--game-version','1.20.1','--data-dir',"$env:RUNNER_TEMP\aurora-game-test",'--test-report',"$pwd\..\evidence\minecraft-demo.json",'--screenshot-dir',"$pwd\..\evidence\game-screens") -Wait -PassThru
           Copy-Item "$env:RUNNER_TEMP\aurora-game-test\logs\launcher-latest.log" ../evidence/minecraft-launch.log -ErrorAction SilentlyContinue

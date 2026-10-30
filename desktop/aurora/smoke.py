@@ -6,6 +6,9 @@ from PySide6.QtCore import QTimer,QObject
 from PySide6.QtGui import QGuiApplication
 from .auth import offline
 
+def renderer_ready(lines):
+    return 'Created:' in lines and 'Backend library:' in lines
+
 def game_smoke(app,root,backend,args):
     report={'ok':False,'platform':sys.platform,'frozen':bool(getattr(sys,'frozen',False)),'version':args.game_version,'mode':'demo','credentials_used':False,'game_window':False,'renderer_initialized':False}
     path=Path(args.test_report);path.parent.mkdir(parents=True,exist_ok=True);shots=Path(args.screenshot_dir or path.parent/'game-screens');shots.mkdir(parents=True,exist_ok=True)
@@ -34,7 +37,8 @@ def game_smoke(app,root,backend,args):
         if not state['launched']:state['launched']=time.monotonic();report['pid']=p.pid
         if p.poll() is not None:finish('Minecraft exited before the main menu, code '+str(p.returncode));return
         lines='\n'.join(backend._log)
-        report['renderer_initialized']='Created:' in lines and ('OpenAL initialized' in lines or 'Sound engine started' in lines)
+        report['renderer_initialized']=renderer_ready(lines)
+        report['audio_initialized']='OpenAL initialized' in lines or 'Sound engine started' in lines
         if sys.platform=='win32':
             from ctypes import wintypes
             user=ctypes.windll.user32;found=[]
