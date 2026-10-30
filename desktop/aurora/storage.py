@@ -1,16 +1,26 @@
 # Copyright (C) 2026 reunionSama. SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
-import base64, ctypes, json, os, re, sys, uuid
+import base64, ctypes, json, os, re, sys, uuid, threading, time
 from pathlib import Path, PurePosixPath
 
 DEFAULTS = dict(memory=4096, width=1280, height=720, workers=12, source="auto", java="", library="", sky=True, actions=True, interval=15, brightness=0.72, speed=0.5, hue=0.4, fps=60, theme="dark", autoUpdate=True, jvmArgs="", selectedAccount="", selectedVersion="", selectedInstance="default", closeOnLaunch=False, language="zh_CN")
 
+_json_lock=threading.RLock()
 def atomic_json(path:Path, value):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp=path.with_name(path.name+"."+uuid.uuid4().hex+".tmp")
-    with temp.open("w",encoding="utf-8") as f:
-        json.dump(value,f,ensure_ascii=False,indent=2); f.flush(); os.fsync(f.fileno())
-    os.replace(temp,path)
+    # Windows cannot always replace the same pathname concurrently. Serialize our
+    # writers, then tolerate a brief antivirus/indexer lock without losing old data.
+    with _json_lock:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp=path.with_name(path.name+"."+uuid.uuid4().hex+".tmp")
+        try:
+            with temp.open("w",encoding="utf-8") as f:
+                json.dump(value,f,ensure_ascii=False,indent=2);f.flush();os.fsync(f.fileno())
+            for attempt in range(7):
+                try:os.replace(temp,path);break
+                except PermissionError:
+                    if attempt==6:raise
+                    time.sleep(.015*(2**attempt))
+        finally:temp.unlink(missing_ok=True)
 
 def load_json(path:Path, default):
     try:return json.loads(path.read_text("utf-8"))

@@ -8,7 +8,7 @@ from aurora.terracotta import Terracotta
 root=Path(sys.argv[1]);out=Path(sys.argv[2]);out.parent.mkdir(parents=True,exist_ok=True)
 e=Engine(Store(root));t=Terracotta(e);report={'ok':False,'room_created':False,'peer_connection_tested':False}
 try:
-    t.ensure();meta=t.call('/meta').json();state=t.state();report.update(ok=meta.get('version')=='v0.4.2',version=meta.get('version'),state=state.get('state'),local_http_api=True)
+    t.ensure();meta=t.call('/meta').json();state=t.state();report.update(ok=str(meta.get('version','')).lstrip('v')=='0.4.2',version=meta.get('version'),state=state.get('state'),local_http_api=True)
 finally:
     if t.port:
         try:t.call('/panic',{'peaceful':'true'})
