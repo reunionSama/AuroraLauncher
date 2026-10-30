@@ -35,7 +35,7 @@ class Engine:
         return version
     def loader(self,version):
         data=self.metadata(version);text=(version+json.dumps(data.get("libraries",[]))).lower()
-        for key in ("neoforge","fabric","quilt","forge","optifine"):
+        for key in ("neoforge","quilt","fabric","forge","optifine"):
             if key in text:return key
         return "vanilla"
     def _job(self,meta,path):return (meta["url"],path,meta.get("sha1",""),"sha1",meta.get("size",0))

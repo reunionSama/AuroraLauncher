@@ -49,6 +49,8 @@ jobs:
         run: python tests/oauth_preflight.py ../evidence/oauth-registration.json
       - name: Verify official Terracotta Windows component and local API
         run: python tests/terracotta_smoke.py "$env:RUNNER_TEMP\aurora-terra-test" ../evidence/terracotta.json
+      - name: Verify real Fabric, Quilt, Forge, OptiFine, NeoForge and Fabric API installation
+        run: python tests/installers_smoke.py "$env:RUNNER_TEMP\aurora-game-test" ../evidence/installers.json
       - name: Build single Windows executable
         run: python -m PyInstaller --noconfirm --clean AuroraLauncher.spec
       - name: Run the actual packaged EXE and exercise every page
@@ -75,8 +77,6 @@ jobs:
           if ($p.ExitCode -ne 0) { throw "Minecraft demo smoke failed: $($p.ExitCode)" }
           $r = Get-Content ../evidence/minecraft-demo.json | ConvertFrom-Json
           if (-not $r.ok -or -not $r.game_window -or -not $r.renderer_initialized) { throw 'A real Minecraft window was not verified' }
-      - name: Verify real Fabric, Quilt, Forge, OptiFine, NeoForge and Fabric API installation
-        run: python tests/installers_smoke.py "$env:RUNNER_TEMP\aurora-game-test" ../evidence/installers.json
       - name: Collect executable and corresponding source
         run: |
           New-Item -ItemType Directory -Force ../deliverables | Out-Null

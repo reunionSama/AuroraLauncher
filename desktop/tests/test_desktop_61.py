@@ -112,3 +112,10 @@ def test_home_instruction_removed_without_removing_drag_or_twenty_actions():
     assert 'player.yawAngle+=' in text and 'player.triggerAction()' in text
     from aurora.visuals import NAMES
     assert len(NAMES)==20
+
+def test_quilt_is_not_misidentified_as_fabric_from_intermediary_library(tmp_path):
+    from aurora.engine import Engine
+    from aurora.storage import atomic_json
+    engine=Engine(Store(tmp_path));version='quilt-loader-0.28.1-1.20.1'
+    atomic_json(engine.root/'versions'/version/(version+'.json'),{'id':version,'libraries':[{'name':'net.fabricmc:intermediary:1.20.1'},{'name':'org.quiltmc:quilt-loader:0.28.1'}]})
+    assert engine.loader(version)=='quilt'
