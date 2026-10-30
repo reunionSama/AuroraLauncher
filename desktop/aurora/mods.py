@@ -29,7 +29,7 @@ class Modrinth:
         data=self.net.json(API+f"/project/{project}/version?"+urllib.parse.urlencode(params),ttl=180)
         if not data:raise RuntimeError("未找到适用于当前游戏版本和加载器的文件")
         return data
-    def install(self,project,kind="mod"):
+    def install(self,project,kind="mod",version_id=""):
         if kind=="modpack":return self.install_pack(project)
         if not self.e.store.settings.get('selectedVersion'):raise ValueError("请先选择游戏版本")
         if kind=="mod" and self.e.loader(self.e.store.settings['selectedVersion'])=="vanilla":raise ValueError("请先安装并选择 Fabric、Forge 或 Quilt 版本，再安装模组")
@@ -52,7 +52,7 @@ class Modrinth:
                     if dep.get('dependency_type')=='required' and (dep.get('project_id') or dep.get('version_id')):
                         resolve(dep.get('project_id') or dep['version_id'],dep.get('version_id'))
         try:
-            resolve(project)
+            resolve(project,version_id or None)
             manifest=load_json(dest/".aurora-mods.json",{})
             for file,name,pid,vid in files:
                 old=manifest.get(pid,{}).get('filename')
@@ -101,3 +101,4 @@ class Modrinth:
                 self.e.store.instances.append(obj);self.e.store.settings.update(selectedInstance=ident,selectedVersion=version);self.e.store.save()
                 return "整合包已安装到独立实例："+obj['name']
             except Exception:shutil.rmtree(stage,ignore_errors=True);raise
+

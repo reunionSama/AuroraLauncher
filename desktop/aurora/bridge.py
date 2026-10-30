@@ -14,18 +14,22 @@ from .engine import Engine
 from .auth import Auth,offline,verification_url
 from .skins import SkinCache
 from .updates import UpdateChecker
+from .installers import InstallerCatalog,COMPONENTS,validate_plan
+from .i18n import translate,LANGUAGES
 from .mods import Modrinth
 from .terracotta import Terracotta
 
 class Bridge(QObject):
+    installerChanged=Signal()
     dataChanged=Signal();settingsChanged=Signal();runtimeChanged=Signal();logsChanged=Signal();tasksChanged=Signal()
     message=Signal(str,str);deviceReady=Signal(str,str);updateReady=Signal(str,str)
     _done=Signal(str,object,str);_progress=Signal(str,int,int);_line=Signal(str);_exited=Signal(int);_device=Signal(str,str)
     def __init__(self,store:Store,assets:Path,test_mode=False):
-        super().__init__();self.store=store;self.assets=assets;self.test_mode=test_mode;self.pool=ThreadPoolExecutor(max_workers=5,thread_name_prefix='Aurora')
+        super().__init__();self.store=store;self.assets=assets;self.test_mode=test_mode;self.pool=ThreadPoolExecutor(max_workers=5,thread_name_prefix='Aurora');self.catalog_pool=ThreadPoolExecutor(max_workers=4,thread_name_prefix='Aurora-catalog')
         self.cancel=threading.Event();self.engine=Engine(store,self._progress.emit,self._line.emit,self.cancel);self.terra=Terracotta(self.engine)
+        self._catalog_generation=0;self._installer={'minecraft':'','rows':[]}
         self.updater=UpdateChecker(store.root/'cache')
-        self._skin_cancel=threading.Event();self.skins=SkinCache(store.root/'cache',self._skin_cancel);self._skin_identity=None;self._skin_generation=0;self._skin_model='classic';self._skin_status='默认皮肤'
+        self._skin_cancel=threading.Event();self.skins=SkinCache(store.root/'cache',self._skin_cancel);self._skin_identity=None;self._skin_generation=0;self._skin_model='classic';self._skin_status='默认皮肤';self._cape=''
         self.vault=Vault(store.root);self.accounts=[];self._vault_error=''
         try:self.accounts=self.vault.read()
         except Exception:self._vault_error='账号数据无法解密，请重新登录微软账号。'
@@ -43,6 +47,8 @@ class Bridge(QObject):
             if self.store.settings['autoUpdate']:QTimer.singleShot(1600,lambda:self.checkUpdate(False))
     @Property('QVariantMap',notify=settingsChanged)
     def settings(self):return dict(self.store.settings)
+    @Property('QVariantMap',notify=installerChanged)
+    def installer(self):return self._installer
     @Property('QVariantMap',notify=runtimeChanged)
     def runtime(self):return dict(self._runtime)
     @Property('QVariantList',notify=dataChanged)
@@ -70,11 +76,15 @@ class Bridge(QObject):
     @Property(str,notify=dataChanged)
     def skinPath(self):return self._skin
     @Property(str,notify=dataChanged)
+    def capePath(self):return self._cape
+    @Property(str,notify=dataChanged)
     def skinModel(self):return self._skin_model
     @Property(str,notify=dataChanged)
     def skinStatus(self):return self._skin_status
     @Property(str,constant=True)
     def version(self):return VERSION
+    @Slot(str,result=str)
+    def translate(self,text):return translate(text,self.store.settings.get('language','zh_CN'))
     @Property(str,constant=True)
     def clientId(self):return CLIENT_ID
     @Property(str,notify=dataChanged)
@@ -94,7 +104,7 @@ class Bridge(QObject):
             try:self._done.emit(key,fn(),'')
             except Exception as e:
                 error=redact(str(e));self._line.emit(type(e).__name__+': '+error);self._done.emit(key,None,error)
-        self.pool.submit(run)
+        (self.catalog_pool if key.startswith('component-') else self.pool).submit(run)
     @Slot(str,object,str)
     def _finish(self,key,value,error):
         busy=self._jobs.pop(key,False)
@@ -104,7 +114,8 @@ class Bridge(QObject):
                 if task['id']==key:task['status']='失败 / 已取消' if error else '已完成';task['progress']=0 if error else 1;break
             self.tasksChanged.emit();self.cancel.clear()
         if error:
-            if key=='versions':self._set(catalogLoading=False);self.message.emit('版本列表暂时不可用',error)
+            if key.startswith('component-'):self._catalog_result(key,[],error)
+            elif key=='versions':self._set(catalogLoading=False);self.message.emit('版本列表暂时不可用',error)
             elif key=='terra-poll':
                 self._terra_failures+=1
                 if self._terra_failures>=5:self.terra.port=0;self._set(roomState='陶瓦连接已断开，请重新启动')
@@ -113,7 +124,8 @@ class Bridge(QObject):
             elif key=='update-auto':self._append_log('自动检查更新：'+error)
             else:self.message.emit('操作未完成',error)
             return
-        if key=='versions':self._all=value;self._set(catalogLoading=False);self.filterVersions(self._query,self._snapshots)
+        if key.startswith('component-'):self._catalog_result(key,value,'')
+        elif key=='versions':self._all=value;self._set(catalogLoading=False);self.filterVersions(self._query,self._snapshots)
         elif key.startswith('search-'):
             if key==f'search-{self._search_id}':self._results=value;self.dataChanged.emit()
         elif key in ('login','refresh-account'):
@@ -126,7 +138,7 @@ class Bridge(QObject):
         elif key.startswith('skin-'):
             if key==f'skin-{self._skin_generation}' and self.store.settings.get('skinMode','account')=='account':
                 account=self.account();account.update(value['meta']);self.vault.write(self.accounts)
-                self._skin_identity=self._skin_key()
+                self._skin_identity=self._skin_key();self._cape=value.get('cape_path','')
                 if value['path']:self._skin=value['path'];self._skin_model=value['meta'].get('skin_model','classic')
                 self._skin_status=value['warning'] or ('玩家皮肤 · '+account.get('name',''))
                 self.dataChanged.emit()
@@ -175,6 +187,7 @@ class Bridge(QObject):
     @Slot(str,'QVariant')
     def setSetting(self,key,value):
         if key not in self.store.settings:return
+        if key=='language' and value not in LANGUAGES:return
         if self._runtime['busy'] and key in ('java','library','source','workers','selectedVersion','selectedInstance'):return
         if key in ('memory','width','height','workers','interval','fps'):
             bounds={'memory':(512,65536),'width':(640,7680),'height':(480,4320),'workers':(2,32),'interval':(5,60),'fps':(30,60)};lo,hi=bounds[key];value=max(lo,min(hi,int(value)))
@@ -219,6 +232,26 @@ class Bridge(QObject):
         self._versions=[{'id':x['id'],'type':x['type'],'date':x.get('releaseTime','')[:10],'installed':x['id'] in installed} for x in self._all if query.lower() in x['id'].lower() and (snapshots or x['type']=='release')][:250];self.dataChanged.emit()
     @Slot(str,str)
     def installVersion(self,version,loader='vanilla'):self.submit('install-'+version,lambda:self.engine.install(version,loader),True)
+    @Slot(str)
+    def prepareInstaller(self,version):
+        if not version:version=self.engine.base_version(self.store.settings.get('selectedVersion',''))
+        if not re.fullmatch(r'[A-Za-z0-9_.+\-]+',version):return
+        self._catalog_generation+=1;generation=self._catalog_generation
+        self._installer={'minecraft':version,'rows':[{'kind':k,'title':title,'status':'正在获取版本列表…','choices':[],'loading':True} for k,title in COMPONENTS]};self.installerChanged.emit()
+        catalog=InstallerCatalog(self.engine)
+        for kind,title in COMPONENTS:self.submit(f'component-{generation}-{kind}',lambda kind=kind:catalog.choices(kind,version))
+    def _catalog_result(self,key,choices,error):
+        _,generation,kind=key.split('-',2)
+        if int(generation)!=self._catalog_generation:return
+        for row in self._installer['rows']:
+            if row['kind']==kind:row.update(choices=choices,loading=False,status='获取失败，点击重试' if error else ('可以选择' if choices else '此游戏版本暂无可用组件'))
+        self.installerChanged.emit()
+    @Slot('QVariantMap')
+    def installPlan(self,plan):
+        try:
+            version,loader,chosen=validate_plan(plan)
+            self.submit('install-'+version,lambda:InstallerCatalog(self.engine).install(dict(plan)),True)
+        except Exception as exc:self.message.emit('无法安装',str(exc))
     @Slot()
     def repairVersion(self):
         version=self.store.settings.get('selectedVersion')
@@ -434,11 +467,13 @@ class Bridge(QObject):
         self.store.save();self.dataChanged.emit();self.settingsChanged.emit()
     def _skin_key(self):
         account=self.account()
-        return (account.get('id',''),account.get('skin',''),account.get('skin_model','classic'),self.store.settings.get('customSkin',''),self.store.settings.get('skinMode','account'))
+        return (account.get('id',''),account.get('skin',''),account.get('skin_model','classic'),account.get('cape',''),self.store.settings.get('customSkin',''),self.store.settings.get('skinMode','account'))
     def _sync_skin(self,force=False):
         identity=self._skin_key()
         if identity==self._skin_identity and not force:return
-        self._skin_identity=identity;self._skin_generation+=1;self._skin=str(self.assets/'aurora_skin.png');self._skin_model='classic'
+        self._skin_identity=identity;self._skin_generation+=1;self._skin=str(self.assets/'aurora_skin.png');self._skin_model='classic';self._cape=''
+        cached_cape=self.skins.cached(self.account().get('cape',''))
+        if cached_cape:self._cape=str(cached_cape)
         custom=Path(self.store.settings.get('customSkin') or self.store.root/'custom_skin.png');account=dict(self.account())
         if identity[-1]=='custom' and custom.exists():
             self._skin=str(custom);self._skin_status='自定义皮肤';self.dataChanged.emit();return
@@ -451,4 +486,5 @@ class Bridge(QObject):
     def useAccountSkin(self):
         self.store.settings['skinMode']='account';self.store.save();self._sync_skin(force=True);self.settingsChanged.emit()
     def close(self):
-        self.store.save();self.cancel.set();self._skin_cancel.set();self.pool.shutdown(wait=False,cancel_futures=True);self._logfile.flush();self._logfile.close()
+        self.store.save();self.cancel.set();self._skin_cancel.set();self.pool.shutdown(wait=False,cancel_futures=True);self.catalog_pool.shutdown(wait=False,cancel_futures=True);self._logfile.flush();self._logfile.close()
+

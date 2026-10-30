@@ -41,7 +41,7 @@ class SkinCache:
         return None
     def resolve(self,account,refresh_profile=True):
         session=self.session or requests.Session();session.headers.update({'User-Agent':USER_AGENT})
-        owned=self.session is None;meta={k:account[k] for k in ('skin','skin_model') if k in account};warning=''
+        owned=self.session is None;meta={k:account[k] for k in ('skin','skin_model','cape','cape_id') if k in account};warning=''
         try:
             if refresh_profile and account.get('access_token'):
                 try:
@@ -52,10 +52,17 @@ class SkinCache:
                 except (requests.RequestException,ValueError) as exc:
                     warning='未能刷新在线玩家皮肤，已使用该账号缓存；请检查网络或重新登录。'
                     if not meta.get('skin'):raise RuntimeError(warning) from exc
-            url=meta.get('skin','')
-            if not url:return {'path':'','meta':meta,'warning':'此账号未返回玩家皮肤'}
+            path=self._download(session,meta.get('skin','')) if meta.get('skin') else ''
+            cape_path=''
+            if meta.get('cape'):
+                try:cape_path=str(self._download(session,meta['cape']))
+                except (RuntimeError,ValueError):warning=(warning+' 披风加载失败，可刷新重试。').strip()
+            return {'path':str(path),'cape_path':cape_path,'meta':meta,'warning':warning}
+        finally:
+            if owned:session.close()
+    def _download(self,session,url):
             url=texture_url(url);path=self.cached(url)
-            if path:return {'path':str(path),'meta':meta,'warning':warning}
+            if path:return path
             path=self.root/(hashlib.sha256(url.encode()).hexdigest()+'.png');data=bytearray()
             for attempt in range(2):
                 if self.cancel.is_set():raise RuntimeError('皮肤加载已取消')
@@ -76,6 +83,5 @@ class SkinCache:
             temp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
             try:temp.write_bytes(data);os.replace(temp,path)
             finally:temp.unlink(missing_ok=True)
-            return {'path':str(path),'meta':meta,'warning':warning}
-        finally:
-            if owned:session.close()
+            return path
+

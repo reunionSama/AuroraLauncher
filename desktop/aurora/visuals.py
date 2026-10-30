@@ -132,7 +132,7 @@ def player_boxes(model):
 class PlayerView(AnimatedPaint):
     poseChanged=Signal()
     def __init__(self,parent=None):
-        super().__init__(parent);self._yaw=-.36;self._targetYaw=self._yaw;self._model='classic';self._skin=QImage();self._skinPath='';self._actions=True;self._interval=15;self._action=-1;self._actionStart=-100.;self._nextAction=15.;self._lastAction=-1
+        super().__init__(parent);self._yaw=-.36;self._targetYaw=self._yaw;self._model='classic';self._skin=QImage();self._skinPath='';self._cape=QImage();self._capePath='';self._actions=True;self._interval=15;self._action=-1;self._actionStart=-100.;self._nextAction=15.;self._lastAction=-1
     def tick(self):
         old=self._time;super().tick();self._yaw+=(self._targetYaw-self._yaw)*(1-math.exp(-24*(self._time-old)))
         if self._active and self._actions and self._time>=self._nextAction:self.triggerAction();self._nextAction=self._time+self._interval
@@ -150,6 +150,9 @@ class PlayerView(AnimatedPaint):
             full=QImage(64,64,QImage.Format.Format_ARGB32);full.fill(0);p=QPainter(full);p.drawImage(0,0,image);p.drawImage(QRectF(16,48,16,16),image,QRectF(0,16,16,16));p.drawImage(QRectF(32,48,16,16),image,QRectF(40,16,16,16));p.end();image=full
         self._skin=image;self._skinPath=path;self.update();self.changed.emit()
     skinPath=Property(str,lambda self:self._skinPath,setSkin,notify=AnimatedPaint.changed)
+    def setCape(self,path):
+        self._capePath=path;self._cape=QImage(path).scaled(64,32) if path else QImage();self.update();self.changed.emit()
+    capePath=Property(str,lambda self:self._capePath,setCape,notify=AnimatedPaint.changed)
     def setActions(self,v):self._actions=bool(v);self.changed.emit()
     actions=Property(bool,lambda self:self._actions,setActions,notify=AnimatedPaint.changed)
     def setInterval(self,v):self._interval=max(5,min(60,int(v)));self._nextAction=self._time+self._interval;self.changed.emit()
@@ -167,6 +170,9 @@ class PlayerView(AnimatedPaint):
         scale=min(w/23,h/37);center=w*.5;base=h*.94
         shadow=QRadialGradient(center,base-4,scale*9);shadow.setColorAt(0,QColor(0,0,0,70));shadow.setColorAt(1,QColor(0,0,0,0));p.setPen(QColor(0,0,0,0));p.setBrush(shadow);p.drawEllipse(QRectF(center-scale*9,base-scale*2,scale*18,scale*4))
         boxes=player_boxes(self._model)
+        if not self._cape.isNull():
+            boxes.append(('cape',(10,16,1),(0,24,-2.6),(0,-8,-.75),(0,0),(10,16,1),True))
+            pose['cape']=[.12+max(0,-pose['body'][0])*.5+math.sin(t*2.1)*.035,0,math.sin(t*1.4)*.02]
         faces=[]
         for name,dims,pivot,offset,uv,texture_dims,outer in boxes:
             bw,bh,bd=dims;x,y,z=-bw/2,-bh/2,-bd/2;X,Y,Z=bw/2,bh/2,bd/2
@@ -178,12 +184,13 @@ class PlayerView(AnimatedPaint):
                     rel=tuple(vertex[i]+offset[i] for i in range(3));rel=rotate(rel,pose[name]);rel=tuple(rel[i]+pivot[i] for i in range(3))
                     if name!='body':rel=rotate((rel[0],rel[1]-18,rel[2]),pose['body']);rel=(rel[0],rel[1]+18,rel[2])
                     rel=rotate((rel[0],rel[1]-16+dy,rel[2]),(0,self._yaw,0));rel=rotate(rel,(-.12,0,0));world.append(rel)
-                polygon=QPolygonF([QPointF(center+a*scale,base-(b+16)*scale) for a,b,c in world]);faces.append((sum(v[2] for v in world)/4,polygon,rect,face,outer))
+                polygon=QPolygonF([QPointF(center+a*scale,base-(b+16)*scale) for a,b,c in world]);faces.append((sum(v[2] for v in world)/4,polygon,rect,face,outer,self._cape if name=='cape' else self._skin))
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform,False)
-        for depth,poly,(u,v,sw,sh),face,outer in sorted(faces,key=lambda x:x[0]):
+        for depth,poly,(u,v,sw,sh),face,outer,texture in sorted(faces,key=lambda x:x[0]):
             a,b,c,d=[poly[i] for i in range(4)]
             determinant=(b.x()-a.x())*(d.y()-a.y())-(b.y()-a.y())*(d.x()-a.x())
             if determinant<.1:continue
             p.save();p.setTransform(QTransform((b.x()-a.x())/sw,(b.y()-a.y())/sw,(d.x()-a.x())/sh,(d.y()-a.y())/sh,a.x(),a.y()),True)
-            p.drawImage(QRectF(0,0,sw,sh),self._skin,QRectF(u,v,sw,sh));p.restore()
+            p.drawImage(QRectF(0,0,sw,sh),texture,QRectF(u,v,sw,sh));p.restore()
             if not outer and face in (1,2,3,5):p.setPen(QColor(0,0,0,0));p.setBrush(QColor(0,0,0,35 if face in (2,3) else 65));p.drawPolygon(poly)
+

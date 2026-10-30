@@ -35,7 +35,7 @@ class Engine:
         return version
     def loader(self,version):
         data=self.metadata(version);text=(version+json.dumps(data.get("libraries",[]))).lower()
-        for key in ("neoforge","fabric","quilt","forge"):
+        for key in ("neoforge","fabric","quilt","forge","optifine"):
             if key in text:return key
         return "vanilla"
     def _job(self,meta,path):return (meta["url"],path,meta.get("sha1",""),"sha1",meta.get("size",0))
@@ -70,13 +70,37 @@ class Engine:
             chosen=loader_version or None
             if loader=="forge" and chosen and chosen.startswith(version+"-"):
                 chosen=chosen[len(version)+1:]
-            target=provider.install(version,str(self.root),loader_version=chosen,callback=self.callbacks(),java=java)
+            target=self._install_neoforge(version,chosen,java) if loader=='neoforge' else provider.install(version,str(self.root),loader_version=chosen,callback=self.callbacks(),java=java)
             profile=self.metadata(target)
             if not profile:raise RuntimeError("加载器安装器结束，但未找到完整版本")
             if profile.get('inheritsFrom') and not profile.get('jar'):
                 profile['jar']=version;atomic_json(self.root/'versions'/target/(target+'.json'),profile)
             return target
         self.emit("安装完成",1,1);return version
+    def _install_neoforge(self,version,chosen,java):
+        # The library's legacy version normalizer prepends '1.' and rejects the
+        # new year-based Minecraft versions. The official installer knows them.
+        from .installers import InstallerCatalog
+        if not chosen:
+            choices=InstallerCatalog(self).choices('neoforge',version)
+            if not choices:raise ValueError('此 Minecraft 版本尚无对应加载器')
+            chosen=choices[0]['id']
+        if not re.fullmatch(r'[A-Za-z0-9_.+\-]+',chosen):raise ValueError('NeoForge 版本无效')
+        jar=self.net.download(f'https://maven.neoforged.net/releases/net/neoforged/neoforge/{chosen}/neoforge-{chosen}-installer.jar',self.store.root/'downloads'/('neoforge-'+chosen+'-installer.jar'))
+        with zipfile.ZipFile(jar) as z:
+            profile=json.loads(z.read('install_profile.json'));client=json.loads(z.read('version.json'))
+        if profile.get('minecraft',client.get('inheritsFrom'))!=version:raise ValueError('NeoForge 安装器不兼容所选游戏版本')
+        if not (self.root/'launcher_profiles.json').exists():atomic_json(self.root/'launcher_profiles.json',{'profiles':{}})
+        flags=subprocess.CREATE_NO_WINDOW if sys.platform=='win32' else 0
+        process=subprocess.Popen([java,'-jar',str(jar),'--install-client',str(self.root)],cwd=self.store.root/'downloads',stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding='utf-8',errors='replace',creationflags=flags)
+        threading.Thread(target=lambda:[self.log(line.rstrip()) for line in process.stdout],daemon=True).start()
+        deadline=time.monotonic()+600
+        while process.poll() is None:
+            if self.cancel.wait(.15) or time.monotonic()>deadline:process.kill();process.wait();raise Cancelled('NeoForge 安装已取消或超时')
+        if process.returncode:raise RuntimeError('NeoForge 安装失败，请查看实时日志')
+        target=client.get('id','neoforge-'+chosen)
+        if not self.metadata(target):raise RuntimeError('NeoForge 安装器未生成游戏配置')
+        return target
     def callbacks(self):
         state={"max":0,"text":"准备游戏组件"}
         def status(x):state['text']=str(x);self.emit(state['text'])
@@ -110,6 +134,8 @@ class Engine:
             jobs.append(self._job(data["downloads"]["client"],self.root/"versions"/version/(version+".jar")))
         logging=data.get("logging",{}).get("client",{}).get("file")
         if logging:jobs.append(self._job(logging,safe_path(self.root/"assets/log_configs",logging["id"])))
+        mappings=data.get('downloads',{}).get('client_mappings')
+        if mappings and self.store.settings.get('gameBranding',True):jobs.append(self._job(mappings,self.root/'assets/mappings'/(version+'.txt')))
         self.net.batch(jobs,lambda n,t:self.emit("下载游戏与运行库",n,t))
         for archive,exclude in natives:
             self.extract_zip(archive,self.root/"versions"/version/"natives",exclude)
@@ -166,11 +192,12 @@ class Engine:
         if not executable:raise RuntimeError("Java 安装不完整，请在设置中选择对应 Java")
         return executable
     def make_command(self,version,account,game_dir,server="",demo=False):
+        from .branding import branding_args
         java=self.java_for(version);s=self.store.settings
         args=shlex.split(s.get("jvmArgs", ""),posix=sys.platform!="win32")
         if any(x.startswith(("-cp","-classpath","--class-path","-jar")) for x in args):raise ValueError("自定义 JVM 参数不能替换游戏主类或 classpath")
         options={"username":account["name"],"uuid":account["uuid"],"token":account.get("access_token","0"),"executablePath":java,
-                 "launcherName":"AuroraLauncher","clientId":CLIENT_ID,"launcherVersion":VERSION,"gameDirectory":str(game_dir),"jvmArguments":[f"-Xmx{int(s['memory'])}M","-Xms512M",*args],
+                 "launcherName":"AuroraLauncher","clientId":CLIENT_ID,"launcherVersion":VERSION,"gameDirectory":str(game_dir),"jvmArguments":[f"-Xmx{int(s['memory'])}M","-Xms512M",*branding_args(self,version),*args],
                  "customResolution":True,"resolutionWidth":str(s['width']),"resolutionHeight":str(s['height']),"enableLoggingConfig":True,"demo":demo}
         if server:
             if not re.fullmatch(r"[A-Za-z0-9_.:\-\[\]]{1,255}",server):raise ValueError("服务器地址格式无效")
@@ -205,3 +232,4 @@ class Engine:
     def stop(self):
         with self.process_lock:
             if self.process and self.process.poll() is None:self.process.terminate()
+

@@ -1,0 +1,1227 @@
+{
+  "主页": {
+    "en_US": "Home",
+    "ja_JP": "ホーム",
+    "ko_KR": "홈"
+  },
+  "版本管理": {
+    "en_US": "Versions",
+    "ja_JP": "バージョン管理",
+    "ko_KR": "버전 관리"
+  },
+  "资源中心": {
+    "en_US": "Resources",
+    "ja_JP": "リソース",
+    "ko_KR": "리소스"
+  },
+  "实例与存档": {
+    "en_US": "Instances & worlds",
+    "ja_JP": "インスタンスとワールド",
+    "ko_KR": "인스턴스 및 월드"
+  },
+  "账号管理": {
+    "en_US": "Accounts",
+    "ja_JP": "アカウント",
+    "ko_KR": "계정"
+  },
+  "多人联机": {
+    "en_US": "Multiplayer",
+    "ja_JP": "マルチプレイ",
+    "ko_KR": "멀티플레이"
+  },
+  "下载任务": {
+    "en_US": "Downloads",
+    "ja_JP": "ダウンロード",
+    "ko_KR": "다운로드"
+  },
+  "工具中心": {
+    "en_US": "Tools",
+    "ja_JP": "ツール",
+    "ko_KR": "도구"
+  },
+  "实时日志": {
+    "en_US": "Live logs",
+    "ja_JP": "リアルタイムログ",
+    "ko_KR": "실시간 로그"
+  },
+  "个性化设置": {
+    "en_US": "Personalization",
+    "ja_JP": "カスタマイズ",
+    "ko_KR": "개인화"
+  },
+  "关于": {
+    "en_US": "About",
+    "ja_JP": "このアプリについて",
+    "ko_KR": "정보"
+  },
+  "陶瓦多人联机": {
+    "en_US": "Terracotta multiplayer",
+    "ja_JP": "Terracotta マルチプレイ",
+    "ko_KR": "Terracotta 멀티플레이"
+  },
+  "设置": {
+    "en_US": "Settings",
+    "ja_JP": "設定",
+    "ko_KR": "설정"
+  },
+  "让每次出发更从容": {
+    "en_US": "Every adventure starts here",
+    "ja_JP": "冒険の始まりを、もっと快適に",
+    "ko_KR": "모든 모험을 편안하게"
+  },
+  "设置与工作区 / ": {
+    "en_US": "Settings & workspace / ",
+    "ja_JP": "設定とワークスペース / ",
+    "ko_KR": "설정 및 작업 공간 / "
+  },
+  "▣  版本": {
+    "en_US": "▣  Versions",
+    "ja_JP": "▣  バージョン",
+    "ko_KR": "▣  버전"
+  },
+  "◇  资源": {
+    "en_US": "◇  Resources",
+    "ja_JP": "◇  リソース",
+    "ko_KR": "◇  리소스"
+  },
+  "◎  账号": {
+    "en_US": "◎  Accounts",
+    "ja_JP": "◎  アカウント",
+    "ko_KR": "◎  계정"
+  },
+  "↓  下载": {
+    "en_US": "↓  Downloads",
+    "ja_JP": "↓  ダウンロード",
+    "ko_KR": "↓  다운로드"
+  },
+  "⚙  设置": {
+    "en_US": "⚙  Settings",
+    "ja_JP": "⚙  設定",
+    "ko_KR": "⚙  설정"
+  },
+  "查看实时日志": {
+    "en_US": "View live logs",
+    "ja_JP": "ログを表示",
+    "ko_KR": "실시간 로그 보기"
+  },
+  "查看下载": {
+    "en_US": "View downloads",
+    "ja_JP": "ダウンロードを表示",
+    "ko_KR": "다운로드 보기"
+  },
+  "取消": {
+    "en_US": "Cancel",
+    "ja_JP": "キャンセル",
+    "ko_KR": "취소"
+  },
+  "把冒险，带到桌面。": {
+    "en_US": "Bring your adventures to desktop.",
+    "ja_JP": "冒険をデスクトップへ。",
+    "ko_KR": "모험을 데스크톱으로."
+  },
+  "你的版本、世界与朋友，在这里再次相遇。": {
+    "en_US": "Your versions, worlds and friends, together again.",
+    "ja_JP": "バージョン、ワールド、フレンドがここでつながる。",
+    "ko_KR": "버전, 월드, 친구를 한곳에서 만나세요."
+  },
+  "我的工作台": {
+    "en_US": "My workspace",
+    "ja_JP": "マイワークスペース",
+    "ko_KR": "내 작업 공간"
+  },
+  "启动检查 · 诊断 · 实时日志": {
+    "en_US": "Launch checks · Diagnostics · Live logs",
+    "ja_JP": "起動チェック・診断・ログ",
+    "ko_KR": "시작 점검 · 진단 · 실시간 로그"
+  },
+  "相约同一世界": {
+    "en_US": "Share the same world",
+    "ja_JP": "同じワールドで遊ぼう",
+    "ko_KR": "같은 세계에서 만나요"
+  },
+  "陶瓦联机 · 邀请你的朋友": {
+    "en_US": "Terracotta · Invite your friends",
+    "ja_JP": "Terracotta・フレンドを招待",
+    "ko_KR": "Terracotta · 친구 초대"
+  },
+  "极光与个性化": {
+    "en_US": "Aurora & personalization",
+    "ja_JP": "オーロラとカスタマイズ",
+    "ko_KR": "오로라 및 개인화"
+  },
+  "光幕 · 皮肤 · 人物动作": {
+    "en_US": "Aurora · Skins · Player actions",
+    "ja_JP": "オーロラ・スキン・アクション",
+    "ko_KR": "오로라 · 스킨 · 동작"
+  },
+  "准备下一次冒险": {
+    "en_US": "Ready for your next adventure",
+    "ja_JP": "次の冒険へ",
+    "ko_KR": "다음 모험을 준비하세요"
+  },
+  "玩家账号": {
+    "en_US": "Player account",
+    "ja_JP": "プレイヤーアカウント",
+    "ko_KR": "플레이어 계정"
+  },
+  "添加微软 / 离线账号": {
+    "en_US": "Add Microsoft / offline account",
+    "ja_JP": "Microsoft / オフラインアカウントを追加",
+    "ko_KR": "Microsoft / 오프라인 계정 추가"
+  },
+  "独立实例": {
+    "en_US": "Isolated instance",
+    "ja_JP": "独立インスタンス",
+    "ko_KR": "독립 인스턴스"
+  },
+  "游戏版本": {
+    "en_US": "Game version",
+    "ja_JP": "ゲームバージョン",
+    "ko_KR": "게임 버전"
+  },
+  "请先安装一个版本": {
+    "en_US": "Install a version first",
+    "ja_JP": "先にバージョンをインストール",
+    "ko_KR": "먼저 버전을 설치하세요"
+  },
+  "游戏运行中 · 查看日志": {
+    "en_US": "Game running · View logs",
+    "ja_JP": "ゲーム実行中・ログを見る",
+    "ko_KR": "게임 실행 중 · 로그 보기"
+  },
+  "正在准备…": {
+    "en_US": "Preparing…",
+    "ja_JP": "準備中…",
+    "ko_KR": "준비 중…"
+  },
+  "启动游戏": {
+    "en_US": "Launch game",
+    "ja_JP": "ゲームを起動",
+    "ko_KR": "게임 시작"
+  },
+  "安装新版本": {
+    "en_US": "Install a new version",
+    "ja_JP": "新しいバージョンをインストール",
+    "ko_KR": "새 버전 설치"
+  },
+  "复用已有游戏目录": {
+    "en_US": "Use existing game directory",
+    "ja_JP": "既存のゲームフォルダーを使用",
+    "ko_KR": "기존 게임 폴더 사용"
+  },
+  "刷新列表": {
+    "en_US": "Refresh list",
+    "ja_JP": "一覧を更新",
+    "ko_KR": "목록 새로고침"
+  },
+  "已安装版本": {
+    "en_US": "Installed versions",
+    "ja_JP": "インストール済み",
+    "ko_KR": "설치된 버전"
+  },
+  "还没有安装版本\n从右侧选择一个开始": {
+    "en_US": "No versions installed\nChoose a version on the right",
+    "ja_JP": "未インストールです\n右側からバージョンを選択",
+    "ko_KR": "설치된 버전이 없습니다\n오른쪽에서 버전을 선택하세요"
+  },
+  "校验 / 修复所选版本": {
+    "en_US": "Verify / repair selected version",
+    "ja_JP": "選択したバージョンを検証・修復",
+    "ko_KR": "선택한 버전 검사 / 복구"
+  },
+  "安装 / 更换加载器": {
+    "en_US": "Install / change mod loader",
+    "ja_JP": "ローダーをインストール・変更",
+    "ko_KR": "로더 설치 / 변경"
+  },
+  "打开版本目录": {
+    "en_US": "Open versions directory",
+    "ja_JP": "バージョンフォルダーを開く",
+    "ko_KR": "버전 폴더 열기"
+  },
+  "搜索版本，例如 1.21.1 / 1.20.1": {
+    "en_US": "Search versions, e.g. 1.21.1 / 1.20.1",
+    "ja_JP": "バージョンを検索（例：1.21.1 / 1.20.1）",
+    "ko_KR": "버전 검색 (예: 1.21.1 / 1.20.1)"
+  },
+  "快照": {
+    "en_US": "Snapshots",
+    "ja_JP": "スナップショット",
+    "ko_KR": "스냅샷"
+  },
+  "安装文件共用，模组和存档按实例隔离。Java 会按版本自动准备。": {
+    "en_US": "Game files are shared; mods and worlds are isolated per instance. Java is selected automatically.",
+    "ja_JP": "ゲーム本体は共有、MOD とワールドはインスタンスごとに分離。Java は自動選択されます。",
+    "ko_KR": "게임 파일은 공유하고 모드와 월드는 인스턴스별로 분리합니다. Java는 자동 선택됩니다."
+  },
+  "正式版": {
+    "en_US": "Release",
+    "ja_JP": "正式版",
+    "ko_KR": "정식 버전"
+  },
+  "快照 / 历史版": {
+    "en_US": "Snapshot / historical",
+    "ja_JP": "スナップショット・旧バージョン",
+    "ko_KR": "스냅샷 / 이전 버전"
+  },
+  "选择组件 / 安装": {
+    "en_US": "Components / install",
+    "ja_JP": "構成を選択・インストール",
+    "ko_KR": "구성 요소 / 설치"
+  },
+  "正在获取版本列表…": {
+    "en_US": "Loading versions…",
+    "ja_JP": "バージョンを取得中…",
+    "ko_KR": "버전 불러오는 중…"
+  },
+  "没有匹配版本，可刷新或调整搜索": {
+    "en_US": "No matching versions. Refresh or change your search.",
+    "ja_JP": "一致するバージョンがありません。更新または検索条件を変更してください。",
+    "ko_KR": "일치하는 버전이 없습니다. 새로고침하거나 검색 조건을 바꾸세요."
+  },
+  "Modrinth · 按所选游戏版本与加载器匹配": {
+    "en_US": "Modrinth · Matched to your selected game and loader",
+    "ja_JP": "Modrinth・選択したゲームとローダーに対応",
+    "ko_KR": "Modrinth · 선택한 게임 및 로더와 호환"
+  },
+  "导入整合包": {
+    "en_US": "Import modpack",
+    "ja_JP": "MOD パックをインポート",
+    "ko_KR": "모드팩 가져오기"
+  },
+  "模组": {
+    "en_US": "Mods",
+    "ja_JP": "MOD",
+    "ko_KR": "모드"
+  },
+  "资源包": {
+    "en_US": "Resource packs",
+    "ja_JP": "リソースパック",
+    "ko_KR": "리소스 팩"
+  },
+  "光影": {
+    "en_US": "Shaders",
+    "ja_JP": "シェーダー",
+    "ko_KR": "셰이더"
+  },
+  "整合包": {
+    "en_US": "Modpacks",
+    "ja_JP": "MOD パック",
+    "ko_KR": "모드팩"
+  },
+  "搜索模组、整合包、资源包或光影": {
+    "en_US": "Search mods, modpacks, resource packs or shaders",
+    "ja_JP": "MOD、MOD パック、リソースパック、シェーダーを検索",
+    "ko_KR": "모드, 모드팩, 리소스 팩 또는 셰이더 검색"
+  },
+  "搜索": {
+    "en_US": "Search",
+    "ja_JP": "検索",
+    "ko_KR": "검색"
+  },
+  " 次下载": {
+    "en_US": " downloads",
+    "ja_JP": " ダウンロード",
+    "ko_KR": "회 다운로드"
+  },
+  "安装": {
+    "en_US": "Install",
+    "ja_JP": "インストール",
+    "ko_KR": "설치"
+  },
+  "输入关键词并搜索\n需要的依赖会一并下载": {
+    "en_US": "Enter a query and search\nRequired dependencies are downloaded too",
+    "ja_JP": "キーワードを入力して検索\n必須の依存 MOD もダウンロードされます",
+    "ko_KR": "검색어를 입력하세요\n필수 의존성도 함께 다운로드합니다"
+  },
+  "当前实例资源": {
+    "en_US": "This instance's resources",
+    "ja_JP": "このインスタンスのリソース",
+    "ko_KR": "현재 인스턴스 리소스"
+  },
+  "导入本地": {
+    "en_US": "Import local files",
+    "ja_JP": "ローカルから追加",
+    "ko_KR": "로컬 파일 가져오기"
+  },
+  "打开目录": {
+    "en_US": "Open directory",
+    "ja_JP": "フォルダーを開く",
+    "ko_KR": "폴더 열기"
+  },
+  "停用": {
+    "en_US": "Disable",
+    "ja_JP": "無効にする",
+    "ko_KR": "비활성화"
+  },
+  "启用": {
+    "en_US": "Enable",
+    "ja_JP": "有効にする",
+    "ko_KR": "활성화"
+  },
+  "你的玩家档案": {
+    "en_US": "Your player profiles",
+    "ja_JP": "プレイヤープロフィール",
+    "ko_KR": "내 플레이어 프로필"
+  },
+  "微软正版账号": {
+    "en_US": "Microsoft account",
+    "ja_JP": "Microsoft アカウント",
+    "ko_KR": "Microsoft 계정"
+  },
+  "本地离线账号": {
+    "en_US": "Local offline account",
+    "ja_JP": "ローカルオフラインアカウント",
+    "ko_KR": "로컬 오프라인 계정"
+  },
+  "当前账号": {
+    "en_US": "Current account",
+    "ja_JP": "現在のアカウント",
+    "ko_KR": "현재 계정"
+  },
+  "使用": {
+    "en_US": "Use",
+    "ja_JP": "使用",
+    "ko_KR": "사용"
+  },
+  "移除": {
+    "en_US": "Remove",
+    "ja_JP": "削除",
+    "ko_KR": "삭제"
+  },
+  "添加账号": {
+    "en_US": "Add account",
+    "ja_JP": "アカウントを追加",
+    "ko_KR": "계정 추가"
+  },
+  "微软登录会在浏览器完成授权，启动器不会收集你的微软密码。": {
+    "en_US": "Microsoft authorization happens in your browser. The launcher never collects your Microsoft password.",
+    "ja_JP": "Microsoft の認証はブラウザーで行います。ランチャーはパスワードを取得しません。",
+    "ko_KR": "Microsoft 인증은 브라우저에서 진행됩니다. 런처는 Microsoft 암호를 수집하지 않습니다."
+  },
+  "使用微软账号登录": {
+    "en_US": "Sign in with Microsoft",
+    "ja_JP": "Microsoft でサインイン",
+    "ko_KR": "Microsoft 로그인"
+  },
+  "本地离线档案": {
+    "en_US": "Local offline profile",
+    "ja_JP": "ローカルオフラインプロフィール",
+    "ko_KR": "로컬 오프라인 프로필"
+  },
+  "3–16 位字母、数字或下划线": {
+    "en_US": "3–16 letters, digits or underscores",
+    "ja_JP": "英数字とアンダースコア、3～16 文字",
+    "ko_KR": "영문, 숫자, 밑줄 3~16자"
+  },
+  "添加离线账号": {
+    "en_US": "Add offline account",
+    "ja_JP": "オフラインアカウントを追加",
+    "ko_KR": "오프라인 계정 추가"
+  },
+  "离线档案可用于本地游戏；需要正版验证的服务器请使用微软账号。": {
+    "en_US": "Offline profiles are for local play. Use a Microsoft account for authenticated servers.",
+    "ja_JP": "オフラインプロフィールはローカルプレイ用です。認証が必要なサーバーには Microsoft アカウントを使用してください。",
+    "ko_KR": "오프라인 프로필은 로컬 플레이용입니다. 인증 서버에는 Microsoft 계정을 사용하세요."
+  },
+  "自定义人物皮肤": {
+    "en_US": "Custom player skin",
+    "ja_JP": "カスタムスキン",
+    "ko_KR": "플레이어 스킨 사용자 지정"
+  },
+  "使用 / 刷新账号皮肤": {
+    "en_US": "Use / refresh account skin",
+    "ja_JP": "アカウントのスキンを使用・更新",
+    "ko_KR": "계정 스킨 사용 / 새로고침"
+  },
+  "微软账号令牌使用 Windows 当前用户加密保存。": {
+    "en_US": "Microsoft tokens are encrypted for your current Windows user.",
+    "ja_JP": "Microsoft トークンは現在の Windows ユーザーで暗号化して保存します。",
+    "ko_KR": "Microsoft 토큰은 현재 Windows 사용자로 암호화하여 저장합니다."
+  },
+  "导入实例": {
+    "en_US": "Import instance",
+    "ja_JP": "インスタンスをインポート",
+    "ko_KR": "인스턴스 가져오기"
+  },
+  "导出当前实例": {
+    "en_US": "Export current instance",
+    "ja_JP": "現在のインスタンスをエクスポート",
+    "ko_KR": "현재 인스턴스 내보내기"
+  },
+  "新实例名称，例如 生存世界 / 建筑 / 模组测试": {
+    "en_US": "Instance name, e.g. Survival / Building / Mod testing",
+    "ja_JP": "インスタンス名（例：サバイバル・建築・MOD テスト）",
+    "ko_KR": "인스턴스 이름 (예: 생존 / 건축 / 모드 테스트)"
+  },
+  "新建独立实例": {
+    "en_US": "Create isolated instance",
+    "ja_JP": "独立インスタンスを作成",
+    "ko_KR": "독립 인스턴스 만들기"
+  },
+  "我的实例": {
+    "en_US": "My instances",
+    "ja_JP": "マイインスタンス",
+    "ko_KR": "내 인스턴스"
+  },
+  "尚未选择版本": {
+    "en_US": "No version selected",
+    "ja_JP": "バージョン未選択",
+    "ko_KR": "선택한 버전 없음"
+  },
+  "打开当前实例目录": {
+    "en_US": "Open current instance",
+    "ja_JP": "現在のインスタンスを開く",
+    "ko_KR": "현재 인스턴스 폴더 열기"
+  },
+  " · 备忘": {
+    "en_US": " · Notes",
+    "ja_JP": " ・メモ",
+    "ko_KR": " · 메모"
+  },
+  "保存": {
+    "en_US": "Save",
+    "ja_JP": "保存",
+    "ko_KR": "저장"
+  },
+  "记录整合包注意事项、朋友的服务器地址、下次想做的事…": {
+    "en_US": "Note modpack tips, friends' servers or plans for next time…",
+    "ja_JP": "MOD パックの注意点、フレンドのサーバー、次にしたいことなどを記録…",
+    "ko_KR": "모드팩 주의 사항, 친구 서버 주소, 다음 계획 등을 기록하세요…"
+  },
+  "世界存档": {
+    "en_US": "World saves",
+    "ja_JP": "ワールドのセーブ",
+    "ko_KR": "월드 저장 파일"
+  },
+  "恢复备份": {
+    "en_US": "Restore backup",
+    "ja_JP": "バックアップを復元",
+    "ko_KR": "백업 복원"
+  },
+  "备份": {
+    "en_US": "Back up",
+    "ja_JP": "バックアップ",
+    "ko_KR": "백업"
+  },
+  "此实例还没有存档。": {
+    "en_US": "This instance has no worlds yet.",
+    "ja_JP": "このインスタンスにワールドはありません。",
+    "ko_KR": "이 인스턴스에는 아직 월드가 없습니다."
+  },
+  "Terracotta © burningtnt 及贡献者 · 通过官方独立组件连接，不修改陶瓦程序。": {
+    "en_US": "Terracotta © burningtnt and contributors · Uses the unmodified official component.",
+    "ja_JP": "Terracotta © burningtnt と貢献者・公式コンポーネントを改変せず使用します。",
+    "ko_KR": "Terracotta © burningtnt 및 기여자 · 수정하지 않은 공식 구성 요소를 사용합니다."
+  },
+  "创建你的房间": {
+    "en_US": "Create your room",
+    "ja_JP": "ルームを作成",
+    "ko_KR": "내 방 만들기"
+  },
+  "先进入 Minecraft 存档，在暂停菜单选择“对局域网开放”，再创建房间。": {
+    "en_US": "Enter a world in Minecraft, choose Open to LAN in the pause menu, then create a room.",
+    "ja_JP": "Minecraft のワールドに入り、一時停止メニューで「LAN に公開」を選んでからルームを作成してください。",
+    "ko_KR": "Minecraft 월드에 들어가 일시 정지 메뉴에서 LAN 서버 열기를 선택한 후 방을 만드세요."
+  },
+  "创建房间": {
+    "en_US": "Create room",
+    "ja_JP": "ルームを作成",
+    "ko_KR": "방 만들기"
+  },
+  "加入朋友的世界": {
+    "en_US": "Join a friend's world",
+    "ja_JP": "フレンドのワールドに参加",
+    "ko_KR": "친구의 월드에 참가"
+  },
+  "粘贴陶瓦房间邀请码": {
+    "en_US": "Paste a Terracotta room code",
+    "ja_JP": "Terracotta の招待コードを貼り付け",
+    "ko_KR": "Terracotta 초대 코드 붙여넣기"
+  },
+  "加入房间": {
+    "en_US": "Join room",
+    "ja_JP": "ルームに参加",
+    "ko_KR": "방 참가"
+  },
+  "离开 / 重置": {
+    "en_US": "Leave / reset",
+    "ja_JP": "退出・リセット",
+    "ko_KR": "나가기 / 초기화"
+  },
+  "邀请码：": {
+    "en_US": "Invite code: ",
+    "ja_JP": "招待コード：",
+    "ko_KR": "초대 코드: "
+  },
+  "房间就绪后会在这里显示邀请码。": {
+    "en_US": "Your invite code appears here when the room is ready.",
+    "ja_JP": "ルームが準備できると招待コードが表示されます。",
+    "ko_KR": "방이 준비되면 여기에 초대 코드가 표시됩니다."
+  },
+  "复制邀请码": {
+    "en_US": "Copy invite code",
+    "ja_JP": "招待コードをコピー",
+    "ko_KR": "초대 코드 복사"
+  },
+  "启动并直连": {
+    "en_US": "Launch and connect",
+    "ja_JP": "起動して接続",
+    "ko_KR": "시작 후 바로 연결"
+  },
+  "直连地址：": {
+    "en_US": "Server address: ",
+    "ja_JP": "接続先：",
+    "ko_KR": "직접 연결 주소: "
+  },
+  "陶瓦开源项目": {
+    "en_US": "Terracotta project",
+    "ja_JP": "Terracotta プロジェクト",
+    "ko_KR": "Terracotta 프로젝트"
+  },
+  "打开下载目录": {
+    "en_US": "Open downloads directory",
+    "ja_JP": "ダウンロードフォルダーを開く",
+    "ko_KR": "다운로드 폴더 열기"
+  },
+  "取消当前任务": {
+    "en_US": "Cancel current task",
+    "ja_JP": "現在のタスクをキャンセル",
+    "ko_KR": "현재 작업 취소"
+  },
+  "暂无下载任务。\n安装游戏、模组或整合包后会在这里显示。": {
+    "en_US": "No downloads yet.\nGame, mod and modpack installations appear here.",
+    "ja_JP": "ダウンロードはありません。\nゲーム、MOD、MOD パックのインストールがここに表示されます。",
+    "ko_KR": "다운로드 작업이 없습니다.\n게임, 모드, 모드팩 설치 작업이 여기에 표시됩니다."
+  },
+  "启动前检查": {
+    "en_US": "Pre-launch checks",
+    "ja_JP": "起動前チェック",
+    "ko_KR": "시작 전 점검"
+  },
+  "网络诊断": {
+    "en_US": "Network diagnostics",
+    "ja_JP": "ネットワーク診断",
+    "ko_KR": "네트워크 진단"
+  },
+  "检测 Java": {
+    "en_US": "Detect Java",
+    "ja_JP": "Java を検出",
+    "ko_KR": "Java 검색"
+  },
+  "打开截图目录": {
+    "en_US": "Open screenshots directory",
+    "ja_JP": "スクリーンショットフォルダーを開く",
+    "ko_KR": "스크린샷 폴더 열기"
+  },
+  "发现的 Java（点击设为自定义路径）": {
+    "en_US": "Detected Java runtimes (click to select)",
+    "ja_JP": "検出した Java（クリックして選択）",
+    "ko_KR": "검색된 Java (클릭하여 선택)"
+  },
+  "实时启动日志": {
+    "en_US": "Live launch logs",
+    "ja_JP": "リアルタイム起動ログ",
+    "ko_KR": "실시간 시작 로그"
+  },
+  "自动滚动": {
+    "en_US": "Auto-scroll",
+    "ja_JP": "自動スクロール",
+    "ko_KR": "자동 스크롤"
+  },
+  "导出脱敏日志": {
+    "en_US": "Export redacted logs",
+    "ja_JP": "機密情報を除いてログを保存",
+    "ko_KR": "민감 정보를 숨긴 로그 내보내기"
+  },
+  "打开日志目录": {
+    "en_US": "Open logs directory",
+    "ja_JP": "ログフォルダーを開く",
+    "ko_KR": "로그 폴더 열기"
+  },
+  "停止游戏": {
+    "en_US": "Stop game",
+    "ja_JP": "ゲームを停止",
+    "ko_KR": "게임 중지"
+  },
+  "Minecraft 正在运行 · PID ": {
+    "en_US": "Minecraft running · PID ",
+    "ja_JP": "Minecraft 実行中・PID ",
+    "ko_KR": "Minecraft 실행 중 · PID "
+  },
+  "启动、下载和游戏输出会实时显示在这里。": {
+    "en_US": "Launch, download and game output appears here in real time.",
+    "ja_JP": "起動、ダウンロード、ゲームの出力をリアルタイムで表示します。",
+    "ko_KR": "시작, 다운로드, 게임 출력을 실시간으로 표시합니다."
+  },
+  "搜索日志 · Ctrl+F": {
+    "en_US": "Search logs · Ctrl+F",
+    "ja_JP": "ログを検索・Ctrl+F",
+    "ko_KR": "로그 검색 · Ctrl+F"
+  },
+  "区分大小写": {
+    "en_US": "Match case",
+    "ja_JP": "大文字と小文字を区別",
+    "ko_KR": "대소문자 구분"
+  },
+  "仅显示匹配行": {
+    "en_US": "Matching lines only",
+    "ja_JP": "一致した行のみ表示",
+    "ko_KR": "일치하는 줄만 표시"
+  },
+  "上一个": {
+    "en_US": "Previous",
+    "ja_JP": "前へ",
+    "ko_KR": "이전"
+  },
+  "下一个": {
+    "en_US": "Next",
+    "ja_JP": "次へ",
+    "ko_KR": "다음"
+  },
+  "让 Aurora 更像你的启动器": {
+    "en_US": "Make Aurora your own",
+    "ja_JP": "Aurora を自分らしく",
+    "ko_KR": "나만의 Aurora 만들기"
+  },
+  "极光与人物": {
+    "en_US": "Aurora & player",
+    "ja_JP": "オーロラとプレイヤー",
+    "ko_KR": "오로라 및 플레이어"
+  },
+  "极光光幕": {
+    "en_US": "Aurora curtains",
+    "ja_JP": "オーロラ",
+    "ko_KR": "오로라 커튼"
+  },
+  "减少界面过渡动画": {
+    "en_US": "Reduce interface transitions",
+    "ja_JP": "画面切替アニメーションを減らす",
+    "ko_KR": "화면 전환 애니메이션 줄이기"
+  },
+  "20 种随机人物动作": {
+    "en_US": "20 randomized player actions",
+    "ja_JP": "20 種類のランダムアクション",
+    "ko_KR": "무작위 플레이어 동작 20종"
+  },
+  "动作间隔：": {
+    "en_US": "Action interval: ",
+    "ja_JP": "アクション間隔：",
+    "ko_KR": "동작 간격: "
+  },
+  " 秒": {
+    "en_US": " seconds",
+    "ja_JP": " 秒",
+    "ko_KR": "초"
+  },
+  "光幕亮度": {
+    "en_US": "Aurora brightness",
+    "ja_JP": "オーロラの明るさ",
+    "ko_KR": "오로라 밝기"
+  },
+  "流动速度": {
+    "en_US": "Flow speed",
+    "ja_JP": "流れる速さ",
+    "ko_KR": "흐름 속도"
+  },
+  "极光配色": {
+    "en_US": "Aurora colors",
+    "ja_JP": "オーロラの色",
+    "ko_KR": "오로라 색상"
+  },
+  "流畅 60 FPS（关闭为省电 30 FPS）": {
+    "en_US": "Smooth 60 FPS (off: power-saving 30 FPS)",
+    "ja_JP": "滑らかな 60 FPS（オフで省電力 30 FPS）",
+    "ko_KR": "부드러운 60 FPS (끄면 절전 30 FPS)"
+  },
+  "切换浅色外观": {
+    "en_US": "Switch to light theme",
+    "ja_JP": "ライトテーマに切替",
+    "ko_KR": "밝은 테마로 전환"
+  },
+  "切换深色外观": {
+    "en_US": "Switch to dark theme",
+    "ja_JP": "ダークテーマに切替",
+    "ko_KR": "어두운 테마로 전환"
+  },
+  "导入皮肤": {
+    "en_US": "Import skin",
+    "ja_JP": "スキンをインポート",
+    "ko_KR": "스킨 가져오기"
+  },
+  "恢复账号皮肤": {
+    "en_US": "Restore account skin",
+    "ja_JP": "アカウントのスキンに戻す",
+    "ko_KR": "계정 스킨 복원"
+  },
+  "游戏与下载": {
+    "en_US": "Game & downloads",
+    "ja_JP": "ゲームとダウンロード",
+    "ko_KR": "게임 및 다운로드"
+  },
+  "游戏内存：": {
+    "en_US": "Game memory: ",
+    "ja_JP": "ゲームメモリー：",
+    "ko_KR": "게임 메모리: "
+  },
+  "窗口大小": {
+    "en_US": "Window size",
+    "ja_JP": "ウィンドウサイズ",
+    "ko_KR": "창 크기"
+  },
+  "并行下载：": {
+    "en_US": "Parallel downloads: ",
+    "ja_JP": "同時ダウンロード数：",
+    "ko_KR": "동시 다운로드: "
+  },
+  " 个": {
+    "en_US": " files",
+    "ja_JP": " ファイル",
+    "ko_KR": "개"
+  },
+  "下载源": {
+    "en_US": "Download source",
+    "ja_JP": "ダウンロード元",
+    "ko_KR": "다운로드 서버"
+  },
+  "自动选择 + 失败回退": {
+    "en_US": "Automatic + fallback",
+    "ja_JP": "自動選択とフォールバック",
+    "ko_KR": "자동 선택 + 대체 서버"
+  },
+  "官方优先": {
+    "en_US": "Prefer official",
+    "ja_JP": "公式を優先",
+    "ko_KR": "공식 서버 우선"
+  },
+  "BMCLAPI 优先": {
+    "en_US": "Prefer BMCLAPI",
+    "ja_JP": "BMCLAPI を優先",
+    "ko_KR": "BMCLAPI 우선"
+  },
+  "Java 路径（留空时自动选择对应版本）": {
+    "en_US": "Java path (blank: automatic selection)",
+    "ja_JP": "Java のパス（空欄で自動選択）",
+    "ko_KR": "Java 경로 (비워 두면 자동 선택)"
+  },
+  "自动管理 Java 8 / 17 / 21": {
+    "en_US": "Automatic Java 8 / 17 / 21 / 25",
+    "ja_JP": "Java 8 / 17 / 21 / 25 を自動管理",
+    "ko_KR": "Java 8 / 17 / 21 / 25 자동 관리"
+  },
+  "选择 Java": {
+    "en_US": "Choose Java",
+    "ja_JP": "Java を選択",
+    "ko_KR": "Java 선택"
+  },
+  "扫描": {
+    "en_US": "Scan",
+    "ja_JP": "検出",
+    "ko_KR": "검색"
+  },
+  "附加 JVM 参数": {
+    "en_US": "Additional JVM arguments",
+    "ja_JP": "追加の JVM 引数",
+    "ko_KR": "추가 JVM 인수"
+  },
+  "例如 -XX:+UseG1GC": {
+    "en_US": "e.g. -XX:+UseG1GC",
+    "ja_JP": "例：-XX:+UseG1GC",
+    "ko_KR": "예: -XX:+UseG1GC"
+  },
+  "更换 / 导入游戏目录": {
+    "en_US": "Change / import game directory",
+    "ja_JP": "ゲームフォルダーを変更・追加",
+    "ko_KR": "게임 폴더 변경 / 가져오기"
+  },
+  "打开游戏库": {
+    "en_US": "Open game library",
+    "ja_JP": "ゲームライブラリを開く",
+    "ko_KR": "게임 라이브러리 열기"
+  },
+  "更新": {
+    "en_US": "Updates",
+    "ja_JP": "更新",
+    "ko_KR": "업데이트"
+  },
+  "打开启动器时检查 Windows 新版": {
+    "en_US": "Check for Windows updates on launcher startup",
+    "ja_JP": "ランチャー起動時に Windows 版の更新を確認",
+    "ko_KR": "런처 시작 시 Windows 새 버전 확인"
+  },
+  "检查更新": {
+    "en_US": "Check for updates",
+    "ja_JP": "更新を確認",
+    "ko_KR": "업데이트 확인"
+  },
+  "让每次出发更从容 · Windows ": {
+    "en_US": "Every adventure starts here · Windows ",
+    "ja_JP": "冒険の始まりを、もっと快適に・Windows ",
+    "ko_KR": "모든 모험을 편안하게 · Windows "
+  },
+  "Aurora 项目维护：reunionSama\n极光主页 · 可旋转人物 · 20 种动作 · 独立实例 · Modrinth · 实时日志 · 陶瓦联机": {
+    "en_US": "Aurora maintainer: reunionSama\nAurora home · Rotatable player · 20 actions · Isolated instances · Modrinth · Live logs · Terracotta",
+    "ja_JP": "Aurora メンテナー：reunionSama\nオーロラ・回転可能なプレイヤー・20 の動作・独立インスタンス・Modrinth・ログ・Terracotta",
+    "ko_KR": "Aurora 유지 관리자: reunionSama\n오로라 홈 · 회전 가능한 플레이어 · 동작 20종 · 독립 인스턴스 · Modrinth · 실시간 로그 · Terracotta"
+  },
+  "项目主页": {
+    "en_US": "Project page",
+    "ja_JP": "プロジェクトページ",
+    "ko_KR": "프로젝트 페이지"
+  },
+  "手机版项目": {
+    "en_US": "Android project",
+    "ja_JP": "Android プロジェクト",
+    "ko_KR": "Android 프로젝트"
+  },
+  "赞助创作者": {
+    "en_US": "Sponsor the creator",
+    "ja_JP": "作者を支援",
+    "ko_KR": "개발자 후원"
+  },
+  "技术来源与开源许可": {
+    "en_US": "Technology & open-source licenses",
+    "ja_JP": "技術とオープンソースライセンス",
+    "ko_KR": "기술 및 오픈 소스 라이선스"
+  },
+  "桌面界面与功能由 Aurora 项目重新实现，沿用 Aurora Android 的交互设计和人物动作公式。手机版基于 Zalith Launcher 2 / PojavLauncher；桌面版使用原生 Windows Java Edition 启动流程。": {
+    "en_US": "Aurora independently implements the desktop interface and features, following Aurora Android's interactions and player actions. The Android version is based on Zalith Launcher 2 / PojavLauncher; desktop launches native Windows Java Edition.",
+    "ja_JP": "Aurora は Android 版の操作設計と動作をもとにデスクトップ UI と機能を独自実装しています。Android 版は Zalith Launcher 2 / PojavLauncher ベースで、デスクトップ版は Windows Java Edition を直接起動します。",
+    "ko_KR": "Aurora는 Android 버전의 상호 작용과 플레이어 동작을 바탕으로 데스크톱 UI와 기능을 독립 구현했습니다. Android 버전은 Zalith Launcher 2 / PojavLauncher 기반이며, 데스크톱은 Windows Java Edition을 직접 실행합니다."
+  },
+  "Zalith Launcher 2：MovTery 及贡献者；PojavLauncher 及贡献者。Aurora 新增部分：reunionSama。整体桌面项目遵循 GPL-3.0-or-later，第三方组件保留各自许可。": {
+    "en_US": "Zalith Launcher 2: MovTery and contributors; PojavLauncher contributors. Aurora additions: reunionSama. Desktop code: GPL-3.0-or-later; third-party components retain their own licenses.",
+    "ja_JP": "Zalith Launcher 2：MovTery と貢献者、PojavLauncher の貢献者。Aurora の追加部分：reunionSama。デスクトップコードは GPL-3.0-or-later、第三者のコンポーネントは各自のライセンスを維持します。",
+    "ko_KR": "Zalith Launcher 2: MovTery 및 기여자, PojavLauncher 기여자. Aurora 추가 부분: reunionSama. 데스크톱 코드는 GPL-3.0-or-later이며 타사 구성 요소는 자체 라이선스를 유지합니다."
+  },
+  "minecraft-launcher-lib © JakobDev（BSD-2-Clause）；Qt / PySide6 © The Qt Company（LGPL-3.0）；Terracotta © burningtnt 及贡献者（AGPL-3.0-or-later，独立进程集成例外）；Noto Sans CJK（SIL Open Font License）。AzureLauncher 仅作为功能流程参考，未复制其代码或图标。": {
+    "en_US": "minecraft-launcher-lib © JakobDev (BSD-2-Clause); Qt / PySide6 © The Qt Company (LGPL-3.0); Terracotta © burningtnt and contributors (AGPL-3.0-or-later, separate-process integration exception); Noto Sans CJK (SIL OFL). AzureLauncher was a workflow reference only; no code or icons were copied.",
+    "ja_JP": "minecraft-launcher-lib © JakobDev（BSD-2-Clause）、Qt / PySide6 © The Qt Company（LGPL-3.0）、Terracotta © burningtnt と貢献者（AGPL-3.0-or-later、独立プロセスの統合例外）、Noto Sans CJK（SIL OFL）。AzureLauncher は操作フローの参考のみで、コードやアイコンはコピーしていません。",
+    "ko_KR": "minecraft-launcher-lib © JakobDev (BSD-2-Clause), Qt / PySide6 © The Qt Company (LGPL-3.0), Terracotta © burningtnt 및 기여자 (AGPL-3.0-or-later, 별도 프로세스 통합 예외), Noto Sans CJK (SIL OFL). AzureLauncher는 작업 흐름만 참고했으며 코드나 아이콘을 복사하지 않았습니다."
+  },
+  "查看完整许可": {
+    "en_US": "View full licenses",
+    "ja_JP": "ライセンス全文を表示",
+    "ko_KR": "전체 라이선스 보기"
+  },
+  "ZL2 开源项目": {
+    "en_US": "ZL2 open-source project",
+    "ja_JP": "ZL2 オープンソース",
+    "ko_KR": "ZL2 오픈 소스 프로젝트"
+  },
+  "陶瓦联机源码": {
+    "en_US": "Terracotta source",
+    "ja_JP": "Terracotta ソースコード",
+    "ko_KR": "Terracotta 소스 코드"
+  },
+  "游戏与模组加载器安装": {
+    "en_US": "Game & mod loader installation",
+    "ja_JP": "ゲームと MOD ローダーのインストール",
+    "ko_KR": "게임 및 모드 로더 설치"
+  },
+  "选择具体组件版本；不选择加载器即安装原版。加载器互斥，API 需匹配对应加载器。": {
+    "en_US": "Choose component versions. No loader means vanilla. Primary loaders are mutually exclusive; APIs must match their loader.",
+    "ja_JP": "構成のバージョンを選択してください。ローダー未選択でバニラになります。ローダーは同時選択できず、API は対応ローダーが必要です。",
+    "ko_KR": "구성 요소 버전을 선택하세요. 로더를 선택하지 않으면 바닐라를 설치합니다. 로더는 하나만 선택할 수 있으며 API는 해당 로더가 필요합니다."
+  },
+  "请先选择对应加载器": {
+    "en_US": "Select the matching loader first",
+    "ja_JP": "先に対応するローダーを選択",
+    "ko_KR": "먼저 해당 로더를 선택하세요"
+  },
+  "不安装": {
+    "en_US": "Do not install",
+    "ja_JP": "インストールしない",
+    "ko_KR": "설치 안 함"
+  },
+  "原版": {
+    "en_US": "Vanilla",
+    "ja_JP": "バニラ",
+    "ko_KR": "바닐라"
+  },
+  "刷新组件列表": {
+    "en_US": "Refresh components",
+    "ja_JP": "構成一覧を更新",
+    "ko_KR": "구성 요소 새로고침"
+  },
+  "开始安装": {
+    "en_US": "Start installation",
+    "ja_JP": "インストール開始",
+    "ko_KR": "설치 시작"
+  },
+  "微软账号登录": {
+    "en_US": "Microsoft account sign-in",
+    "ja_JP": "Microsoft アカウントにサインイン",
+    "ko_KR": "Microsoft 계정 로그인"
+  },
+  "在微软网页输入以下设备码，完成账号授权。": {
+    "en_US": "Enter this device code on Microsoft's website to authorize your account.",
+    "ja_JP": "Microsoft のページでこのデバイスコードを入力してアカウントを認証してください。",
+    "ko_KR": "Microsoft 웹사이트에 이 장치 코드를 입력하여 계정을 인증하세요."
+  },
+  "复制设备码": {
+    "en_US": "Copy device code",
+    "ja_JP": "デバイスコードをコピー",
+    "ko_KR": "장치 코드 복사"
+  },
+  "打开微软登录网页": {
+    "en_US": "Open Microsoft sign-in",
+    "ja_JP": "Microsoft サインインを開く",
+    "ko_KR": "Microsoft 로그인 페이지 열기"
+  },
+  "请在浏览器登录；设备码过期后可重新获取。": {
+    "en_US": "Sign in in your browser. Request a new device code if it expires.",
+    "ja_JP": "ブラウザーでサインインしてください。期限切れの場合はコードを再取得できます。",
+    "ko_KR": "브라우저에서 로그인하세요. 코드가 만료되면 새로 발급받으세요."
+  },
+  "在应用内下载新版 EXE": {
+    "en_US": "Download the new EXE in-app",
+    "ja_JP": "アプリ内で新版 EXE をダウンロード",
+    "ko_KR": "앱에서 새 EXE 다운로드"
+  },
+  "停止 Minecraft？": {
+    "en_US": "Stop Minecraft?",
+    "ja_JP": "Minecraft を停止しますか？",
+    "ko_KR": "Minecraft를 중지할까요?"
+  },
+  "这会结束当前游戏进程，请先保存世界。": {
+    "en_US": "This ends the game process. Save your world first.",
+    "ja_JP": "ゲームプロセスを終了します。先にワールドを保存してください。",
+    "ko_KR": "게임 프로세스가 종료됩니다. 먼저 월드를 저장하세요."
+  },
+  "界面语言": {
+    "en_US": "Interface language",
+    "ja_JP": "表示言語",
+    "ko_KR": "표시 언어"
+  },
+  "语言切换立即生效，并会记住你的选择。": {
+    "en_US": "Language changes apply immediately and are remembered.",
+    "ja_JP": "言語はすぐに切り替わり、選択は保存されます。",
+    "ko_KR": "언어가 즉시 변경되며 선택 사항이 저장됩니다."
+  },
+  "游戏内显示 AuroraLauncher 标识": {
+    "en_US": "Show AuroraLauncher branding in-game",
+    "ja_JP": "ゲーム内に AuroraLauncher を表示",
+    "ko_KR": "게임 내 AuroraLauncher 표시"
+  },
+  "确定": {
+    "en_US": "OK",
+    "ja_JP": "確認",
+    "ko_KR": "확인"
+  },
+  "准备就绪": {
+    "en_US": "Ready",
+    "ja_JP": "準備完了",
+    "ko_KR": "준비 완료"
+  },
+  "正在准备": {
+    "en_US": "Preparing",
+    "ja_JP": "準備中",
+    "ko_KR": "준비 중"
+  },
+  "任务正在进行": {
+    "en_US": "Task in progress",
+    "ja_JP": "タスク実行中",
+    "ko_KR": "작업 진행 중"
+  },
+  "正在进行": {
+    "en_US": "In progress",
+    "ja_JP": "実行中",
+    "ko_KR": "진행 중"
+  },
+  "进行中": {
+    "en_US": "In progress",
+    "ja_JP": "実行中",
+    "ko_KR": "진행 중"
+  },
+  "已完成": {
+    "en_US": "Completed",
+    "ja_JP": "完了",
+    "ko_KR": "완료"
+  },
+  "任务失败": {
+    "en_US": "Task failed",
+    "ja_JP": "タスク失敗",
+    "ko_KR": "작업 실패"
+  },
+  "已取消": {
+    "en_US": "Cancelled",
+    "ja_JP": "キャンセル済み",
+    "ko_KR": "취소됨"
+  },
+  "失败 / 已取消": {
+    "en_US": "Failed / cancelled",
+    "ja_JP": "失敗・キャンセル済み",
+    "ko_KR": "실패 / 취소됨"
+  },
+  "操作未完成": {
+    "en_US": "Operation incomplete",
+    "ja_JP": "操作を完了できませんでした",
+    "ko_KR": "작업을 완료하지 못했습니다"
+  },
+  "默认皮肤": {
+    "en_US": "Default skin",
+    "ja_JP": "既定のスキン",
+    "ko_KR": "기본 스킨"
+  },
+  "玩家皮肤": {
+    "en_US": "Account skin",
+    "ja_JP": "アカウントのスキン",
+    "ko_KR": "계정 스킨"
+  },
+  "自定义皮肤": {
+    "en_US": "Custom skin",
+    "ja_JP": "カスタムスキン",
+    "ko_KR": "사용자 스킨"
+  },
+  "离线账号 · 可导入自定义皮肤": {
+    "en_US": "Offline account · Import a custom skin",
+    "ja_JP": "オフラインアカウント・スキンを追加できます",
+    "ko_KR": "오프라인 계정 · 사용자 스킨을 가져올 수 있습니다"
+  },
+  "正在同步玩家皮肤…": {
+    "en_US": "Syncing player skin…",
+    "ja_JP": "スキンを同期中…",
+    "ko_KR": "플레이어 스킨 동기화 중…"
+  },
+  "皮肤加载失败，可在账号页重试": {
+    "en_US": "Skin could not load. Retry from Accounts.",
+    "ja_JP": "スキンを読み込めませんでした。アカウント画面で再試行できます。",
+    "ko_KR": "스킨을 불러오지 못했습니다. 계정 페이지에서 다시 시도하세요."
+  },
+  "披风加载失败，可刷新重试。": {
+    "en_US": "Cape could not load. Refresh to retry.",
+    "ja_JP": "マントを読み込めませんでした。更新して再試行してください。",
+    "ko_KR": "망토를 불러오지 못했습니다. 새로고침하여 다시 시도하세요."
+  },
+  "未能刷新在线玩家皮肤，已使用该账号缓存；请检查网络或重新登录。": {
+    "en_US": "Online skin refresh failed; using this account's cache. Check your connection or sign in again.",
+    "ja_JP": "オンラインスキンを更新できず、このアカウントのキャッシュを使用しています。接続を確認するか再ログインしてください。",
+    "ko_KR": "온라인 스킨을 갱신하지 못해 이 계정의 캐시를 사용합니다. 네트워크를 확인하거나 다시 로그인하세요."
+  },
+  "可以选择": {
+    "en_US": "Available",
+    "ja_JP": "選択可能",
+    "ko_KR": "선택 가능"
+  },
+  "获取失败，点击重试": {
+    "en_US": "Could not load. Refresh to retry.",
+    "ja_JP": "取得できませんでした。更新してください。",
+    "ko_KR": "불러오지 못했습니다. 새로고침하세요."
+  },
+  "此游戏版本暂无可用组件": {
+    "en_US": "No compatible build for this game version",
+    "ja_JP": "このゲームバージョンに対応する構成はありません",
+    "ko_KR": "이 게임 버전에 호환되는 구성 요소가 없습니다"
+  },
+  "尚未添加账号": {
+    "en_US": "No account added",
+    "ja_JP": "アカウント未登録",
+    "ko_KR": "추가된 계정 없음"
+  },
+  "未连接": {
+    "en_US": "Disconnected",
+    "ja_JP": "未接続",
+    "ko_KR": "연결 안 됨"
+  },
+  "待机": {
+    "en_US": "Idle",
+    "ja_JP": "待機中",
+    "ko_KR": "대기 중"
+  },
+  "房间已就绪": {
+    "en_US": "Room ready",
+    "ja_JP": "ルーム準備完了",
+    "ko_KR": "방 준비 완료"
+  },
+  "已加入房间": {
+    "en_US": "Joined room",
+    "ja_JP": "ルームに参加済み",
+    "ko_KR": "방 참가 완료"
+  },
+  "正在连接房主": {
+    "en_US": "Connecting to host",
+    "ja_JP": "ホストに接続中",
+    "ko_KR": "호스트에 연결 중"
+  },
+  "正在创建房间": {
+    "en_US": "Creating room",
+    "ja_JP": "ルームを作成中",
+    "ko_KR": "방 만드는 중"
+  },
+  "请进入存档并对局域网开放": {
+    "en_US": "Open your world to LAN",
+    "ja_JP": "ワールドを LAN に公開してください",
+    "ko_KR": "월드를 LAN에 공개하세요"
+  },
+  "正在建立连接": {
+    "en_US": "Establishing connection",
+    "ja_JP": "接続を確立中",
+    "ko_KR": "연결 설정 중"
+  },
+  "连接中断，请离开后重试": {
+    "en_US": "Connection interrupted. Leave and retry.",
+    "ja_JP": "接続が切れました。退出して再試行してください。",
+    "ko_KR": "연결이 끊어졌습니다. 나간 후 다시 시도하세요."
+  },
+  "游戏已启动": {
+    "en_US": "Game launched",
+    "ja_JP": "ゲーム起動済み",
+    "ko_KR": "게임이 시작되었습니다"
+  },
+  "游戏已退出": {
+    "en_US": "Game exited",
+    "ja_JP": "ゲーム終了",
+    "ko_KR": "게임 종료"
+  },
+  "游戏异常退出": {
+    "en_US": "Game crashed",
+    "ja_JP": "ゲームが異常終了しました",
+    "ko_KR": "게임이 비정상 종료되었습니다"
+  },
+  "正在取消，等待当前文件结束": {
+    "en_US": "Cancelling after the current file",
+    "ja_JP": "現在のファイル完了後にキャンセルします",
+    "ko_KR": "현재 파일 처리 후 취소하는 중"
+  },
+  "安装完成": {
+    "en_US": "Installation complete",
+    "ja_JP": "インストール完了",
+    "ko_KR": "설치 완료"
+  },
+  "登录成功": {
+    "en_US": "Signed in",
+    "ja_JP": "サインイン成功",
+    "ko_KR": "로그인 성공"
+  },
+  "资源安装完成": {
+    "en_US": "Resources installed",
+    "ja_JP": "リソースのインストール完了",
+    "ko_KR": "리소스 설치 완료"
+  },
+  "操作完成": {
+    "en_US": "Completed",
+    "ja_JP": "完了",
+    "ko_KR": "완료"
+  },
+  "无法安装": {
+    "en_US": "Cannot install",
+    "ja_JP": "インストールできません",
+    "ko_KR": "설치할 수 없습니다"
+  },
+  "无法添加": {
+    "en_US": "Cannot add",
+    "ja_JP": "追加できません",
+    "ko_KR": "추가할 수 없습니다"
+  },
+  "游戏正在运行": {
+    "en_US": "Game is running",
+    "ja_JP": "ゲーム実行中",
+    "ko_KR": "게임 실행 중"
+  },
+  "自动检查更新": {
+    "en_US": "Automatic update check",
+    "ja_JP": "自動更新チェック",
+    "ko_KR": "자동 업데이트 확인"
+  }
+}

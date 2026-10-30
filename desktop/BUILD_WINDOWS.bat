@@ -7,6 +7,8 @@ if not exist ".venv\Scripts\python.exe" goto fail
 if errorlevel 1 goto fail
 .venv\Scripts\python.exe bootstrap_assets.py
 if errorlevel 1 goto fail
+.venv\Scripts\python.exe build_branding.py
+if errorlevel 1 goto fail
 .venv\Scripts\python.exe -m pytest tests -q
 if errorlevel 1 goto fail
 .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean AuroraLauncher.spec
@@ -20,3 +22,4 @@ exit /b 0
 echo Build or startup test failed. See the error above.
 pause
 exit /b 1
+

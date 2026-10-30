@@ -15,6 +15,9 @@ def game_smoke(app,root,backend,args):
     backend.store.settings.update(memory=1536,width=960,height=540,jvmArgs='-Dfile.encoding=UTF-8')
     if os.environ.get('JAVA_HOME'):backend.store.settings['java']=str(Path(os.environ['JAVA_HOME'])/'bin'/'java.exe')
     backend.store.save();root.setProperty('page','logs');state={'start':time.monotonic(),'launched':0,'finished':False,'pid':None}
+    # Skip first-run accessibility onboarding only in this isolated CI profile,
+    # so the captured image can show the actual title-screen version branding.
+    (backend.store.game_dir()/'options.txt').write_text('onboardAccessibility:false\nnarrator:0\n','utf-8')
     def work():
         v=backend.engine.install(args.game_version)
         return backend.engine.launch(v,offline('AuroraTester'),backend.store.game_dir(),backend._exited.emit,demo=True)
@@ -22,7 +25,7 @@ def game_smoke(app,root,backend,args):
     def finish(error=''):
         if state['finished']:return
         state['finished']=True;timer.stop();report['seconds']=round(time.monotonic()-state['start'],2);report['error']=error
-        report['ok']=not error and report['game_window'] and report['renderer_initialized']
+        report['ok']=not error and report['game_window'] and report['renderer_initialized'] and report.get('title_brand_patched',False) and report.get('f3_brand_patched',False)
         try:report['final_log']='\n'.join(backend._log)[-20000:]
         except Exception:pass
         path.write_text(json.dumps(report,ensure_ascii=False,indent=2),'utf-8')
@@ -38,6 +41,10 @@ def game_smoke(app,root,backend,args):
         if p.poll() is not None:finish('Minecraft exited before the main menu, code '+str(p.returncode));return
         lines='\n'.join(backend._log)
         report['renderer_initialized']=renderer_ready(lines)
+        report['title_brand_patched']='branding patched title screen:' in lines
+        report['f3_brand_patched']='branding patched F3 brand:' in lines
+        if report['renderer_initialized'] and not state.get('ready_at'):state['ready_at']=time.monotonic()
+        if time.monotonic()-state['launched']>120 and not (report['title_brand_patched'] and report['f3_brand_patched']):finish('Game branding transformation was not verified');return
         report['audio_initialized']='OpenAL initialized' in lines or 'Sound engine started' in lines
         if sys.platform=='win32':
             from ctypes import wintypes
@@ -50,7 +57,7 @@ def game_smoke(app,root,backend,args):
                     if 'Minecraft' in title.value:found.append((hwnd,title.value))
                 return True
             cb=callback(visit);user.EnumWindows(cb,0)
-            if found and report['renderer_initialized'] and time.monotonic()-state['launched']>20:
+            if found and report['renderer_initialized'] and report['title_brand_patched'] and report['f3_brand_patched'] and time.monotonic()-state.get('ready_at',time.monotonic())>12:
                 hwnd,title=found[0];user.ShowWindow(hwnd,9);user.SetForegroundWindow(hwnd)
                 report['window_title']=title;report['game_window']=True
                 image=QGuiApplication.primaryScreen().grabWindow(int(hwnd))
@@ -59,3 +66,4 @@ def game_smoke(app,root,backend,args):
         else:finish('This real-game smoke requires Windows')
     timer=QTimer(backend);timer.timeout.connect(poll);timer.start(800)
     return timer
+

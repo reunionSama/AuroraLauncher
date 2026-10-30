@@ -18,7 +18,11 @@ def verification_url(device):
 
 def profile_skin(profile):
     skin=next((s for s in profile.get('skins',[]) if s.get('state')=='ACTIVE'),{})
-    return {'skin':skin.get('url',''),'skin_model':'slim' if skin.get('variant','').upper()=='SLIM' else 'classic'}
+    value={'skin':skin.get('url',''),'skin_model':'slim' if skin.get('variant','').upper()=='SLIM' else 'classic'}
+    if 'capes' in profile:
+        cape=next((c for c in profile['capes'] if c.get('state')=='ACTIVE'),{})
+        value.update(cape=cape.get('url',''),cape_id=cape.get('id',''))
+    return value
 class Auth:
     def __init__(self,cancel):
         self.cancel=cancel;self.s=requests.Session();self.s.headers['User-Agent']=USER_AGENT
@@ -78,3 +82,4 @@ def offline(name):
     raw=bytearray(__import__('hashlib').md5(("OfflinePlayer:"+name).encode()).digest());raw[6]=(raw[6]&15)|48;raw[8]=(raw[8]&63)|128
     ident=uuid.UUID(bytes=bytes(raw)).hex
     return {"id":ident,"uuid":ident,"name":name,"kind":"offline","access_token":"0"}
+
