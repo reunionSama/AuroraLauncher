@@ -8,12 +8,13 @@ import Aurora 1.0
 ApplicationWindow {
     id: root
     objectName: "auroraWindow"
-    width: Math.min(1280, Screen.desktopAvailableWidth > 0 ? Screen.desktopAvailableWidth-48 : 1280); height: Math.min(800, Screen.desktopAvailableHeight > 0 ? Screen.desktopAvailableHeight-48 : 800); minimumWidth: 1000; minimumHeight: 650
+    width: Math.min(1280, Screen.desktopAvailableWidth > 0 ? Screen.desktopAvailableWidth-48 : 1280); height: Math.min(800, Screen.desktopAvailableHeight > 0 ? Screen.desktopAvailableHeight-48 : 800); minimumWidth: 960; minimumHeight: 620
     visible: true; title: "AuroraLauncher"
     color: bg
     property string page: "home"
     property var cfg: backend.settings
     property var run: backend.runtime
+    property bool reducedMotion: cfg.reduceMotion === true
     property bool dark: cfg.theme !== "light"
     property color bg: dark ? "#0c1823" : "#edf4f6"
     property color panel: dark ? "#142632" : "#ffffff"
@@ -24,6 +25,14 @@ ApplicationWindow {
     property color line: dark ? "#28424f" : "#d5e4e9"
     property var pages: [ {key:"home",label:"主页",icon:"⌂"},{key:"versions",label:"版本管理",icon:"▣"},{key:"resources",label:"资源中心",icon:"◇"},{key:"instances",label:"实例与存档",icon:"▤"},{key:"accounts",label:"账号管理",icon:"◎"},{key:"multiplayer",label:"多人联机",icon:"♧"},{key:"downloads",label:"下载任务",icon:"↓"},{key:"tools",label:"工具中心",icon:"✧"},{key:"logs",label:"实时日志",icon:"≡"},{key:"settings",label:"个性化设置",icon:"⚙"},{key:"about",label:"关于",icon:"ⓘ"} ]
     property var titles: ({home:"主页",versions:"版本管理",resources:"资源中心",instances:"实例与存档",accounts:"账号管理",multiplayer:"陶瓦多人联机",downloads:"下载任务",tools:"工具中心",logs:"实时日志",settings:"设置",about:"关于"})
+    Component.onCompleted: {
+        if(cfg.windowWidth>0) root.width=Math.min(Math.max(minimumWidth,cfg.windowWidth),Screen.desktopAvailableWidth)
+        if(cfg.windowHeight>0) root.height=Math.min(Math.max(minimumHeight,cfg.windowHeight),Screen.desktopAvailableHeight-36)
+    }
+    onClosing: if(visibility===Window.Windowed) backend.rememberWindow(width,height)
+    Shortcut{sequence:"Ctrl+1";onActivated:root.navigate("home")}
+    Shortcut{sequence:"Ctrl+L";onActivated:root.navigate("logs")}
+    Shortcut{sequence:"Ctrl+,";onActivated:root.navigate("settings")}
     font.family: appFont; font.pixelSize: 14
     palette.windowText: ink; palette.text: ink; palette.buttonText: ink
     palette.window: panel; palette.base: panel2; palette.button: panel2; palette.highlight: accent
@@ -38,11 +47,13 @@ ApplicationWindow {
     component AButton: Button {
         id: b
         property bool primary: false
-        implicitHeight: 42; implicitWidth: Math.max(92, contentItem.implicitWidth+32)
+        implicitHeight: 42; implicitWidth: Math.max(92, Math.ceil(contentItem.implicitWidth)+40)
         padding: 12; leftPadding: 17; rightPadding: 17
+        scale: down ? 0.97 : 1
+        Behavior on scale { NumberAnimation { duration:root.reducedMotion?0:110; easing.type:Easing.OutCubic } }
         font.family: appFont; font.pixelSize: 14
         contentItem: Text { text:b.text; font:b.font; color:b.enabled ? (b.primary ? "#063b39" : root.ink) : root.muted; opacity:b.enabled?1:.45; horizontalAlignment:Text.AlignHCenter; verticalAlignment:Text.AlignVCenter; elide:Text.ElideRight }
-        background: Rectangle { radius: 21; color:b.primary ? (b.down?"#23a99e":b.hovered?"#79e2d5":root.accent) : (b.down?root.line:b.hovered?root.line:root.panel2); opacity:b.enabled?1:.55; Behavior on color { ColorAnimation { duration: 130 } } }
+        background: Rectangle { radius: 21; color:b.primary ? (b.down?"#23a99e":b.hovered?"#79e2d5":root.accent) : (b.down?root.line:b.hovered?root.line:root.panel2); opacity:b.enabled?1:.55; Behavior on color { ColorAnimation { duration: root.reducedMotion?0:130 } } }
     }
     component Field: TextField {
         id: field
@@ -67,7 +78,7 @@ ApplicationWindow {
         ColumnLayout { id:cardBody; anchors.fill:parent;anchors.margins:18;spacing:12 }
     }
     header: Rectangle {
-        height:70; color:root.panel
+        height:root.height<700?60:70; color:root.panel
         RowLayout {
             anchors.fill:parent; anchors.leftMargin:24;anchors.rightMargin:20;spacing:12
             Image { source:assetBase+"/icon.png";Layout.preferredWidth:38;Layout.preferredHeight:38;MouseArea{anchors.fill:parent;cursorShape:Qt.PointingHandCursor;onClicked:root.navigate("home")} }
@@ -75,14 +86,14 @@ ApplicationWindow {
             Item { Layout.fillWidth:true }
             Repeater {
                 model:[{p:"versions",t:"▣  版本"},{p:"resources",t:"◇  资源"},{p:"accounts",t:"◎  账号"},{p:"downloads",t:"↓  下载"},{p:"settings",t:"⚙  设置"}]
-                delegate:AButton { required property var modelData; text:modelData.t;implicitWidth:94;primary:root.page===modelData.p;onClicked:root.navigate(modelData.p) }
+                delegate:AButton { required property var modelData; text:modelData.t;implicitWidth:root.width<1100?80:94;primary:root.page===modelData.p;onClicked:root.navigate(modelData.p) }
             }
         }
     }
     RowLayout {
         anchors.fill:parent;spacing:0
         Rectangle {
-            visible:root.page!=="home";Layout.preferredWidth:190;Layout.fillHeight:true;color:root.panel
+            visible:root.page!=="home";Layout.preferredWidth:root.width<1100?168:190;Layout.fillHeight:true;color:root.panel
             ColumnLayout {
                 anchors.fill:parent;anchors.margins:12;spacing:5
                 Repeater { model:root.pages
@@ -100,6 +111,8 @@ ApplicationWindow {
         }
         Loader {
             id: pageLoader;objectName:"pageLoader";Layout.fillWidth:true;Layout.fillHeight:true
+            onLoaded: if(!root.reducedMotion) pageEnter.restart()
+            NumberAnimation { id:pageEnter;target:pageLoader;property:"opacity";from:0.2;to:1;duration:180;easing.type:Easing.OutCubic }
             sourceComponent: root.page==="home"?homePage:root.page==="versions"?versionsPage:root.page==="resources"?resourcesPage:root.page==="accounts"?accountsPage:root.page==="instances"?instancesPage:root.page==="multiplayer"?multiplayerPage:root.page==="downloads"?downloadsPage:root.page==="tools"?toolsPage:root.page==="logs"?logsPage:root.page==="settings"?settingsPage:aboutPage
         }
     }
@@ -149,10 +162,11 @@ ApplicationWindow {
                         RowLayout {LabelText{text:"准备下一次冒险";font.bold:true;font.pixelSize:17}Item{Layout.fillWidth:true}AButton{text:"＋";implicitWidth:40;implicitHeight:36;onClicked:root.navigate("accounts")}}
                         Item {
                             Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:root.height<740?95:185
-                            PlayerView {id:player;objectName:"playerPreview";anchors.fill:parent;skinPath:backend.skinPath;fps:cfg.fps;actions:cfg.actions;interval:cfg.interval;renderActive:root.page==="home"&&root.active&&root.visibility!==Window.Minimized}
+                            PlayerView {id:player;objectName:"playerPreview";anchors.fill:parent;skinPath:backend.skinPath;skinModel:backend.skinModel;fps:cfg.fps;actions:cfg.actions;interval:cfg.interval;renderActive:root.page==="home"&&root.active&&root.visibility!==Window.Minimized}
                             MouseArea {anchors.fill:parent;property real lastX:0;property bool dragged:false;cursorShape:pressed?Qt.ClosedHandCursor:Qt.OpenHandCursor;onPressed:mouse=>{lastX=mouse.x;dragged=false}onPositionChanged:mouse=>{if(pressed){var d=mouse.x-lastX;if(Math.abs(d)>1)dragged=true;player.yawAngle+=d*.012;lastX=mouse.x}}onClicked:if(!dragged)player.triggerAction()}
                         }
                         MutedText {text:"左右拖动旋转 · 点击人物互动 · 20 种动作";Layout.fillWidth:true;horizontalAlignment:Text.AlignHCenter;font.pixelSize:10}
+                        MutedText{text:backend.skinStatus;Layout.fillWidth:true;maximumLineCount:1;elide:Text.ElideRight;horizontalAlignment:Text.AlignHCenter;font.pixelSize:10}
                         LabelText{text:"玩家账号";font.pixelSize:12;color:root.muted}
                         Select {objectName:"accountSelector";Layout.fillWidth:true;model:backend.accountList;textRole:"name";currentIndex:root.indexFor(backend.accountList,"id",cfg.selectedAccount);displayText:currentIndex<0?"添加微软 / 离线账号":currentText;onActivated:backend.selectAccount(backend.accountList[currentIndex].id)}
                         LabelText{visible:root.height>=740;text:"独立实例";font.pixelSize:12;color:root.muted}
@@ -276,6 +290,8 @@ ApplicationWindow {
                     MutedText{text:"离线档案可用于本地游戏；需要正版验证的服务器请使用微软账号。";Layout.fillWidth:true}
                     Item{Layout.fillHeight:true}
                     AButton{text:"自定义人物皮肤";Layout.fillWidth:true;onClicked:backend.chooseFile("skin")}
+                    AButton{objectName:"accountSkinButton";text:"使用 / 刷新账号皮肤";Layout.fillWidth:true;onClicked:backend.useAccountSkin()}
+                    MutedText{text:backend.skinStatus;Layout.fillWidth:true}
                     MutedText{text:"微软账号令牌使用 Windows 当前用户加密保存。";Layout.fillWidth:true}
                 }
             }
@@ -389,13 +405,14 @@ ApplicationWindow {
                 Card{Layout.fillWidth:true
                     LabelText{text:"极光与人物";font.bold:true;font.pixelSize:18}
                     RowLayout{LabelText{text:"极光光幕";Layout.fillWidth:true}Switch{checked:cfg.sky;onToggled:backend.setSetting("sky",checked)}}
+                    RowLayout{LabelText{text:"减少界面过渡动画";Layout.fillWidth:true}Switch{checked:root.reducedMotion;onToggled:backend.setSetting("reduceMotion",checked)}}
                     RowLayout{LabelText{text:"20 种随机人物动作";Layout.fillWidth:true}Switch{checked:cfg.actions;onToggled:backend.setSetting("actions",checked)}}
                     RowLayout{LabelText{text:"动作间隔："+cfg.interval+" 秒";Layout.preferredWidth:185}Slider{from:5;to:60;stepSize:1;value:cfg.interval;Layout.fillWidth:true;onMoved:backend.setSetting("interval",Math.round(value))}}
                     RowLayout{LabelText{text:"光幕亮度";Layout.preferredWidth:185}Slider{from:0;to:1;value:cfg.brightness;Layout.fillWidth:true;onMoved:backend.setSetting("brightness",value)}}
                     RowLayout{LabelText{text:"流动速度";Layout.preferredWidth:185}Slider{from:0;to:1;value:cfg.speed;Layout.fillWidth:true;onMoved:backend.setSetting("speed",value)}}
                     RowLayout{LabelText{text:"极光配色";Layout.preferredWidth:185}Slider{from:0;to:1;value:cfg.hue;Layout.fillWidth:true;onMoved:backend.setSetting("hue",value)}}
                     RowLayout{LabelText{text:"流畅 60 FPS（关闭为省电 30 FPS）";Layout.fillWidth:true}Switch{checked:cfg.fps===60;onToggled:backend.setSetting("fps",checked?60:30)}}
-                    RowLayout{AButton{text:root.dark?"切换浅色外观":"切换深色外观";onClicked:backend.setSetting("theme",root.dark?"light":"dark")}AButton{text:"更换人物皮肤";onClicked:backend.chooseFile("skin")}Item{Layout.fillWidth:true}}
+                    RowLayout{AButton{text:root.dark?"切换浅色外观":"切换深色外观";onClicked:backend.setSetting("theme",root.dark?"light":"dark")}AButton{text:"导入皮肤";onClicked:backend.chooseFile("skin")}AButton{text:"恢复账号皮肤";onClicked:backend.useAccountSkin()}Item{Layout.fillWidth:true}}
                 }
                 Card{Layout.fillWidth:true
                     LabelText{text:"游戏与下载";font.bold:true;font.pixelSize:18}
@@ -440,11 +457,11 @@ ApplicationWindow {
             }
         }
     }
-    Dialog{id:infoDialog;objectName:"infoDialog";anchors.centerIn:Overlay.overlay;width:Math.min(root.width-100,600);modal:true;standardButtons:Dialog.Ok;contentItem:ScrollView{implicitHeight:Math.min(infoText.implicitHeight+10,350);TextArea{id:infoText;readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;font.family:appFont;color:root.ink;background:null}}background:Rectangle{color:root.panel;radius:22;border.color:root.line}}
-    Dialog{id:loginDialog;objectName:"loginDialog";title:"微软账号登录";anchors.centerIn:Overlay.overlay;width:520;modal:true;closePolicy:Popup.NoAutoClose;standardButtons:Dialog.Cancel;onRejected:{backend.cancelTask();close()}background:Rectangle{color:root.panel;radius:22;border.color:root.line}
-        contentItem:ColumnLayout{spacing:16;LabelText{text:"在微软网页输入以下设备码，完成账号授权。";Layout.fillWidth:true}Text{text:run.authCode;font.family:appFont;font.pixelSize:38;font.bold:true;color:root.accent;Layout.alignment:Qt.AlignHCenter}RowLayout{Layout.alignment:Qt.AlignHCenter;AButton{text:"复制设备码";onClicked:backend.copyText(run.authCode)}AButton{text:"打开微软登录网页";primary:true;onClicked:backend.openLoginPage()}}MutedText{text:"请在浏览器登录；设备码过期后可重新获取。";Layout.fillWidth:true}}
+    Dialog{id:infoDialog;objectName:"infoDialog";anchors.centerIn:Overlay.overlay;width:Math.min(root.width-100,600);modal:true;standardButtons:Dialog.Ok;contentItem:ScrollView{implicitHeight:Math.min(infoText.implicitHeight+10,350);TextArea{id:infoText;width:parent.width;readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;font.family:appFont;color:root.ink;background:null}}background:Rectangle{color:root.panel;radius:22;border.color:root.line}}
+    Dialog{id:loginDialog;objectName:"loginDialog";title:"微软账号登录";anchors.centerIn:Overlay.overlay;width:Math.min(540,root.width-48);modal:true;closePolicy:Popup.NoAutoClose;standardButtons:Dialog.Cancel;onRejected:{backend.cancelTask();close()}background:Rectangle{color:root.panel;radius:22;border.color:root.line}
+        contentItem:ColumnLayout{spacing:16;LabelText{text:"在微软网页输入以下设备码，完成账号授权。";Layout.fillWidth:true}Text{text:run.authCode;font.family:appFont;font.pixelSize:38;font.bold:true;color:root.accent;Layout.alignment:Qt.AlignHCenter}RowLayout{Layout.alignment:Qt.AlignHCenter;AButton{text:"复制设备码";onClicked:backend.copyText(run.authCode)}AButton{objectName:"openMicrosoftLoginButton";text:"打开微软登录网页";primary:true;onClicked:backend.openLoginPage()}}MutedText{text:"请在浏览器登录；设备码过期后可重新获取。";Layout.fillWidth:true}}
     }
-    Dialog{id:updateDialog;title:run.updateTitle;anchors.centerIn:Overlay.overlay;width:620;modal:true;standardButtons:Dialog.Cancel;background:Rectangle{color:root.panel;radius:22;border.color:root.line}contentItem:ColumnLayout{spacing:16;ScrollView{Layout.fillWidth:true;Layout.preferredHeight:300;TextArea{text:run.updateBody;readOnly:true;wrapMode:TextEdit.Wrap;selectByMouse:true;color:root.ink;font.family:appFont;background:null}}AButton{text:"在应用内下载新版 EXE";primary:true;Layout.fillWidth:true;enabled:!run.busy;onClicked:{backend.downloadUpdate();updateDialog.close()}}}}
+    Dialog{id:updateDialog;title:run.updateTitle;anchors.centerIn:Overlay.overlay;width:Math.min(640,root.width-48);modal:true;standardButtons:Dialog.Cancel;background:Rectangle{color:root.panel;radius:22;border.color:root.line}contentItem:ColumnLayout{spacing:16;ScrollView{Layout.fillWidth:true;Layout.preferredHeight:300;TextArea{width:parent.width;text:run.updateBody;readOnly:true;wrapMode:TextEdit.Wrap;selectByMouse:true;color:root.ink;font.family:appFont;background:null}}AButton{text:"在应用内下载新版 EXE";primary:true;Layout.fillWidth:true;enabled:!run.busy;onClicked:{backend.downloadUpdate();updateDialog.close()}}}}
     Dialog{id:stopDialog;title:"停止 Minecraft？";anchors.centerIn:Overlay.overlay;modal:true;standardButtons:Dialog.Yes|Dialog.No;onAccepted:backend.stopGame();LabelText{text:"这会结束当前游戏进程，请先保存世界。"}}
     Connections {
         target:backend

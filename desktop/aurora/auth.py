@@ -1,11 +1,24 @@
 # Copyright (C) 2026 reunionSama. SPDX-License-Identifier: GPL-3.0-or-later
 import time,uuid,re
 import requests
+from urllib.parse import urlsplit
 from . import CLIENT_ID,USER_AGENT
 from .network import Cancelled
 
 TENANT="https://login.microsoftonline.com/consumers/oauth2/v2.0/"
 SCOPES="XboxLive.signin offline_access"
+DEVICE_LOGIN_URL="https://microsoft.com/link"
+
+def verification_url(device):
+    url=device.get('verification_uri',DEVICE_LOGIN_URL)
+    parsed=urlsplit(url)
+    if parsed.scheme=='https' and parsed.netloc.lower() in ('microsoft.com','www.microsoft.com') and parsed.path.rstrip('/') in ('/link','/devicelogin'):
+        return url
+    return DEVICE_LOGIN_URL
+
+def profile_skin(profile):
+    skin=next((s for s in profile.get('skins',[]) if s.get('state')=='ACTIVE'),{})
+    return {'skin':skin.get('url',''),'skin_model':'slim' if skin.get('variant','').upper()=='SLIM' else 'classic'}
 class Auth:
     def __init__(self,cancel):
         self.cancel=cancel;self.s=requests.Session();self.s.headers['User-Agent']=USER_AGENT
@@ -58,7 +71,7 @@ class Auth:
         if r.status_code==404:raise RuntimeError("登录成功，但此微软账号没有可用的 Minecraft Java 玩家档案")
         if r.status_code>=400:raise RuntimeError(f"Minecraft 玩家信息获取失败：HTTP {r.status_code}")
         profile=r.json()
-        return {"id":profile['id'],"uuid":profile['id'],"name":profile['name'],"kind":"microsoft","access_token":minecraft['access_token'],"refresh_token":token.get('refresh_token',''),"expires_at":time.time()+minecraft.get('expires_in',86400),"xuid":xsts['DisplayClaims']['xui'][0].get('xid',''),"skin":next((s['url'] for s in profile.get('skins',[]) if s.get('state')=='ACTIVE'),"")}
+        return {"id":profile['id'],"uuid":profile['id'],"name":profile['name'],"kind":"microsoft","access_token":minecraft['access_token'],"refresh_token":token.get('refresh_token',''),"expires_at":time.time()+minecraft.get('expires_in',86400),"xuid":xsts['DisplayClaims']['xui'][0].get('xid',''),**profile_skin(profile)}
 
 def offline(name):
     if not re.fullmatch(r"[A-Za-z0-9_]{3,16}",name):raise ValueError("离线名称需为 3–16 位英文字母、数字或下划线")

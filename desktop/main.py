@@ -15,10 +15,11 @@ def main():
     from PySide6.QtWidgets import QApplication
     from PySide6.QtQml import QQmlApplicationEngine,qmlRegisterType
     from PySide6.QtQuickControls2 import QQuickStyle
+    from aurora import VERSION
     from aurora.storage import Store
     from aurora.visuals import AuroraView,PlayerView
     from aurora.bridge import Bridge
-    app=QApplication(sys.argv[:1]);app.setOrganizationName('reunionSama');app.setApplicationName('AuroraLauncher');app.setApplicationVersion('6.0.0');app.setWindowIcon(QIcon(str(resources()/'assets/icon.ico')))
+    app=QApplication(sys.argv[:1]);app.setOrganizationName('reunionSama');app.setApplicationName('AuroraLauncher');app.setApplicationVersion(VERSION);app.setWindowIcon(QIcon(str(resources()/'assets/icon.ico')))
     QQuickStyle.setStyle('Basic')
     if sys.platform=='win32':
         import ctypes
@@ -71,12 +72,23 @@ def main():
                     QTest.mouseRelease(root,Qt.MouseButton.LeftButton,Qt.KeyboardModifier.NoModifier,point+QPoint(65,0))
                     report['manual_rotation']=abs(player.property('yawAngle')-old)>.1;player.triggerAction()
                 if page=='about':report['sponsor_button']=root.findChild(QObject,'sponsorButton') is not None
+                if page=='accounts':
+                    from PySide6.QtGui import QDesktopServices
+                    opened=[];original=QDesktopServices.openUrl
+                    try:
+                        QDesktopServices.openUrl=lambda url:opened.append(url.toString()) or True
+                        backend._on_device('TEST-CODE','https://www.microsoft.com/link')
+                        button=root.findChild(QObject,'openMicrosoftLoginButton')
+                        if button is None:raise RuntimeError('Missing Microsoft login button')
+                        button.clicked.emit()
+                        report['microsoft_link_button']=opened==['https://www.microsoft.com/link']
+                    finally:QDesktopServices.openUrl=original;backend._set(authCode='',authUrl='')
                 state['index']+=1
                 if state['index']<len(pages):QTimer.singleShot(70,check_page)
                 else:finish()
             except Exception as e:finish(str(e))
         def finish(error=''):
-            report['warnings']=errors;report['error']=error;report['ok']=not error and all(report['pages'].values()) and report.get('manual_rotation',False) and report.get('sponsor_button',False)
+            report['warnings']=errors;report['error']=error;report['ok']=not error and all(report['pages'].values()) and report.get('manual_rotation',False) and report.get('sponsor_button',False) and report.get('microsoft_link_button',False)
             if report_path:report_path.parent.mkdir(parents=True,exist_ok=True);report_path.write_text(json.dumps(report,ensure_ascii=False,indent=2),'utf-8')
             root.close();app.exit(0 if report['ok'] else 3)
         root.setWidth(1280);root.setHeight(800)

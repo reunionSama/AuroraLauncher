@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64, ctypes, json, os, re, sys, uuid, threading, time
 from pathlib import Path, PurePosixPath
 
-DEFAULTS = dict(memory=4096, width=1280, height=720, workers=12, source="auto", java="", library="", sky=True, actions=True, interval=15, brightness=0.72, speed=0.5, hue=0.4, fps=60, theme="dark", autoUpdate=True, jvmArgs="", selectedAccount="", selectedVersion="", selectedInstance="default", closeOnLaunch=False, language="zh_CN")
+DEFAULTS = dict(memory=4096, width=1280, height=720, workers=12, source="auto", java="", library="", sky=True, actions=True, interval=15, brightness=0.72, speed=0.5, hue=0.4, fps=60, theme="dark", autoUpdate=True, jvmArgs="", selectedAccount="", selectedVersion="", selectedInstance="default", closeOnLaunch=False, language="zh_CN", skinMode="account", reduceMotion=False, windowWidth=0, windowHeight=0)
 
 _json_lock=threading.RLock()
 def atomic_json(path:Path, value):

@@ -1,7 +1,7 @@
 # AuroraLauncher Desktop 6
 
 A new Windows desktop implementation of AuroraLauncher's Android interaction model.
-Maintainer: reunionSama. Application version: 6.0.0 (build 60001). Windows 10/11 x64.
+Maintainer: reunionSama. Application version: 6.0.1 (build 60002). Windows 10/11 x64.
 
 This project replaces the previous desktop implementation. It does not wrap an APK,
 run an Android emulator, or reuse the previous Python desktop launcher UI/source.
@@ -14,8 +14,11 @@ keyboard/mouse controls and per-game Java runtime selection.
 
 ## Features
 
-- Original Aurora star icon and explorer skin; user PNG skins; drag rotation and
-  twenty gestures, every 15 seconds by default. Aurora 60/30 FPS modes.
+- Original Aurora star icon; selected Microsoft account skin, slim/classic model
+  and second skin layer; offline cache, custom PNG override and restore-account
+  button. Eased drag rotation, twenty gestures and feathered Aurora 60/30 FPS modes.
+- Page fades, reduced-motion setting, full button labels, compact 960x620 layout
+  and remembered window size; native Windows resize, minimize and maximize.
 - Vanilla, Fabric, Quilt, Forge and NeoForge installations; official/BMCLAPI source
   preference, bounded retries, parallel downloads, resume and hash verification.
 - Microsoft device-code login, local offline profiles and multiple accounts.
@@ -29,9 +32,15 @@ keyboard/mouse controls and per-game Java runtime selection.
   source and network diagnostics and Java detection/automatic runtime installation.
 - Official unmodified Terracotta 0.4.2 x64 process and documented local HTTP API:
   host/join/reset, invitation code, members and direct-connect address.
-- Windows updates read only `desktop-vX.Y.Z` GitHub releases from this repository,
-  accept only the `AuroraLauncher.exe` asset with its GitHub SHA256, and download
-  in-app. APK/old Windows releases are never treated as desktop updates.
+- Windows updates use the fixed `publicLauncher` release in this repository.
+  Conditional API requests, rate-limit cooldown, parallel release-page fallback
+  and recent/offline caches avoid repeated 403 failures. The updater checks the
+  EXE timestamp and declared version to avoid offering the old desktop build.
+  Downloads stay in-app and require the GitHub SHA256. Update notes come from
+  the same GitHub release. For new uploads, update the version in the release
+  description (e.g. V6.0.2), replace AuroraLauncher.exe and retain its SHA256.
+- Microsoft login opens the verification URI returned with the device code
+  (currently https://www.microsoft.com/link), with a safe microsoft.com/link fallback.
 
 ## Build and testing
 

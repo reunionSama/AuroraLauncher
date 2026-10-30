@@ -11,7 +11,9 @@ from . import VERSION,BUILD,CLIENT_ID,PROJECT,MOBILE_PROJECT,SPONSOR
 from .storage import Store,Vault,atomic_json,load_json,safe_path,redact
 from .network import Net,Cancelled
 from .engine import Engine
-from .auth import Auth,offline
+from .auth import Auth,offline,verification_url
+from .skins import SkinCache
+from .updates import UpdateChecker
 from .mods import Modrinth
 from .terracotta import Terracotta
 
@@ -22,6 +24,8 @@ class Bridge(QObject):
     def __init__(self,store:Store,assets:Path,test_mode=False):
         super().__init__();self.store=store;self.assets=assets;self.test_mode=test_mode;self.pool=ThreadPoolExecutor(max_workers=5,thread_name_prefix='Aurora')
         self.cancel=threading.Event();self.engine=Engine(store,self._progress.emit,self._line.emit,self.cancel);self.terra=Terracotta(self.engine)
+        self.updater=UpdateChecker(store.root/'cache')
+        self._skin_cancel=threading.Event();self.skins=SkinCache(store.root/'cache',self._skin_cancel);self._skin_identity=None;self._skin_generation=0;self._skin_model='classic';self._skin_status='默认皮肤'
         self.vault=Vault(store.root);self.accounts=[];self._vault_error=''
         try:self.accounts=self.vault.read()
         except Exception:self._vault_error='账号数据无法解密，请重新登录微软账号。'
@@ -65,6 +69,10 @@ class Bridge(QObject):
     def logText(self):return '\n'.join(self._log)
     @Property(str,notify=dataChanged)
     def skinPath(self):return self._skin
+    @Property(str,notify=dataChanged)
+    def skinModel(self):return self._skin_model
+    @Property(str,notify=dataChanged)
+    def skinStatus(self):return self._skin_status
     @Property(str,constant=True)
     def version(self):return VERSION
     @Property(str,constant=True)
@@ -100,7 +108,8 @@ class Bridge(QObject):
             elif key=='terra-poll':
                 self._terra_failures+=1
                 if self._terra_failures>=5:self.terra.port=0;self._set(roomState='陶瓦连接已断开，请重新启动')
-            elif key.startswith('skin'):pass
+            elif key.startswith('skin-'):
+                if key==f'skin-{self._skin_generation}':self._skin_status='皮肤加载失败，可在账号页重试';self.dataChanged.emit()
             elif key=='update-auto':self._append_log('自动检查更新：'+error)
             else:self.message.emit('操作未完成',error)
             return
@@ -114,12 +123,20 @@ class Bridge(QObject):
         elif key=='launch':self._set(running=True,pid=int(value),status='游戏已启动');self.dataChanged.emit()
         elif key=='diagnostics':self._diagnostics=value;self.dataChanged.emit()
         elif key=='scan-java':self._java=value;self.dataChanged.emit();self.message.emit('Java 检测完成','发现 '+str(len(value))+' 个 Java 环境')
-        elif key.startswith('skin'):self._skin=value;self.dataChanged.emit()
+        elif key.startswith('skin-'):
+            if key==f'skin-{self._skin_generation}' and self.store.settings.get('skinMode','account')=='account':
+                account=self.account();account.update(value['meta']);self.vault.write(self.accounts)
+                self._skin_identity=self._skin_key()
+                if value['path']:self._skin=value['path'];self._skin_model=value['meta'].get('skin_model','classic')
+                self._skin_status=value['warning'] or ('玩家皮肤 · '+account.get('name',''))
+                self.dataChanged.emit()
         elif key in ('terra-host','terra-join','terra-leave','terra-poll'):self._show_terra(value)
         elif key.startswith('update-'):
-            self._updates=value
-            if value:self._set(updateTitle=value['title'],updateBody=value['body']);self.updateReady.emit(value['title'],value['body'])
-            elif key=='update-manual':self.message.emit('检查完成','此 Windows 发布渠道未发现更新版本')
+            self._updates=value['candidate']
+            self._append_log('检查更新：'+value['message'])
+            if self._updates:
+                v=self._updates;self._set(updateTitle=v['title'],updateBody=v['body']);self.updateReady.emit(v['title'],v['body'])
+            elif key=='update-manual':self.message.emit('检查更新',value['message'])
         elif key=='download-update':self.message.emit('新版已下载',str(value)+'\n请打开下载目录运行新版 EXE。');QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(value).parent)))
         elif key in ('install-mod','import-pack'):
             self.refresh();self.message.emit('资源安装完成',str(value))
@@ -169,6 +186,9 @@ class Bridge(QObject):
         if key=='selectedVersion':self.store.instance()['version']=value
         self._save_timer.start(300);self.settingsChanged.emit()
         if key in ('selectedInstance','library','selectedVersion'):self.refresh()
+    @Slot(int,int)
+    def rememberWindow(self,width,height):
+        if not self.test_mode:self.store.settings.update(windowWidth=max(960,min(7680,width)),windowHeight=max(620,min(4320,height)));self.store.save()
     @Slot(str)
     def selectAccount(self,ident):self.store.settings['selectedAccount']=ident;self.store.save();self.refresh()
     @Slot(str)
@@ -184,10 +204,10 @@ class Bridge(QObject):
     @Slot()
     def microsoftLogin(self):
         def job():
-            auth=Auth(self.cancel);device=auth.start();self._device.emit(device['user_code'],device.get('verification_uri','https://microsoft.com/devicelogin'));return auth.poll(device)
+            auth=Auth(self.cancel);device=auth.start();self._device.emit(device['user_code'],verification_url(device));return auth.poll(device)
         self.submit('login',job,True)
     @Slot()
-    def openLoginPage(self):QDesktopServices.openUrl(QUrl('https://microsoft.com/devicelogin'))
+    def openLoginPage(self):QDesktopServices.openUrl(QUrl(verification_url({'verification_uri':self._runtime.get('authUrl') or 'https://microsoft.com/link'})))
     @Slot(str)
     def copyText(self,text):QGuiApplication.clipboard().setText(text)
     @Slot()
@@ -272,7 +292,7 @@ class Bridge(QObject):
                 from PySide6.QtGui import QImage
                 img=QImage(path)
                 if img.isNull() or img.width() not in (64,128,256,512,1024) or img.height() not in (img.width(),img.width()//2):self.message.emit('皮肤无效','请选择 Minecraft 格式的 PNG 皮肤。');return
-                dest=self.store.root/'custom_skin.png';shutil.copyfile(path,dest);self._skin=str(dest);self.dataChanged.emit()
+                dest=self.store.root/'skins'/('custom-'+__import__('hashlib').sha256(Path(path).read_bytes()).hexdigest()+'.png');dest.parent.mkdir(exist_ok=True);shutil.copyfile(path,dest);self.store.settings.update(skinMode='custom',customSkin=str(dest));self.store.save();self._sync_skin(force=True)
         elif kind=='pack':
             path,_=QFileDialog.getOpenFileName(None,'导入 Modrinth 整合包','','Modrinth 整合包 (*.mrpack)')
             if path:self.submit('import-pack',lambda:Modrinth(self.engine).import_pack(path),True)
@@ -396,18 +416,8 @@ class Bridge(QObject):
         self._set(room=state.get('room',''),roomState=names.get(state.get('state'),state.get('state','未知状态')),roomAddress=state.get('url',''),roomMembers=state.get('profiles',[]))
     @Slot(bool)
     def checkUpdate(self,manual=True):
-        def job():
-            releases=self.engine.net.json('https://api.github.com/repos/reunionSama/AuroraLauncher/releases?per_page=10',key='desktop-updates',ttl=0 if manual else 900)
-            current=tuple(map(int,VERSION.split('.')));candidates=[]
-            for release in releases:
-                if release.get('draft'):continue
-                match=re.search(r'(?i)desktop[-_v]*(\d+\.\d+\.\d+)',release.get('tag_name',''))
-                if not match or tuple(map(int,match[1].split('.')))<=current:continue
-                for a in release.get('assets',[]):
-                    if a['name']=='AuroraLauncher.exe' and a.get('digest','').startswith('sha256:') and a['browser_download_url'].startswith(PROJECT+'/releases/download/'):
-                        candidates.append({'title':release.get('name') or release['tag_name'],'body':release.get('body') or '此版本没有填写更新说明','url':a['browser_download_url'],'digest':a['digest'][7:],'size':a['size'],'version':match[1]})
-            return candidates[0] if candidates else None
-        self.submit('update-manual' if manual else 'update-auto',job)
+        if any(k in self._jobs for k in ('update-manual','update-auto')):return
+        self.submit('update-manual' if manual else 'update-auto',lambda:self.updater.check(manual))
     @Slot()
     def downloadUpdate(self):
         if not self._updates:return
@@ -420,8 +430,25 @@ class Bridge(QObject):
         if not self.store.settings.get('selectedVersion') and self._local:self.store.settings['selectedVersion']=self._local[0]['id'];self.store.instance()['version']=self._local[0]['id']
         self.listFiles(self._filekind);saves=self.store.game_dir()/'saves';saves.mkdir(exist_ok=True)
         self._worlds=[{'name':p.name,'path':str(p)} for p in saves.iterdir() if p.is_dir()]
-        custom=self.store.root/'custom_skin.png'
-        if custom.exists():self._skin=str(custom)
+        self._sync_skin()
         self.store.save();self.dataChanged.emit();self.settingsChanged.emit()
+    def _skin_key(self):
+        account=self.account()
+        return (account.get('id',''),account.get('skin',''),account.get('skin_model','classic'),self.store.settings.get('customSkin',''),self.store.settings.get('skinMode','account'))
+    def _sync_skin(self,force=False):
+        identity=self._skin_key()
+        if identity==self._skin_identity and not force:return
+        self._skin_identity=identity;self._skin_generation+=1;self._skin=str(self.assets/'aurora_skin.png');self._skin_model='classic'
+        custom=Path(self.store.settings.get('customSkin') or self.store.root/'custom_skin.png');account=dict(self.account())
+        if identity[-1]=='custom' and custom.exists():
+            self._skin=str(custom);self._skin_status='自定义皮肤';self.dataChanged.emit();return
+        if account.get('kind')!='microsoft':self._skin_status='离线账号 · 可导入自定义皮肤';self.dataChanged.emit();return
+        cached=self.skins.cached(account.get('skin',''))
+        if cached:self._skin=str(cached);self._skin_model=account.get('skin_model','classic')
+        self._skin_status='正在同步玩家皮肤…';self.dataChanged.emit()
+        self.submit(f'skin-{self._skin_generation}',lambda:self.skins.resolve(account))
+    @Slot()
+    def useAccountSkin(self):
+        self.store.settings['skinMode']='account';self.store.save();self._sync_skin(force=True);self.settingsChanged.emit()
     def close(self):
-        self.store.save();self.cancel.set();self.pool.shutdown(wait=False,cancel_futures=True);self._logfile.flush();self._logfile.close()
+        self.store.save();self.cancel.set();self._skin_cancel.set();self.pool.shutdown(wait=False,cancel_futures=True);self._logfile.flush();self._logfile.close()

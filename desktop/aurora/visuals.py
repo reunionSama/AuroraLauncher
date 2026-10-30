@@ -3,7 +3,7 @@
 from __future__ import annotations
 import math,random,time
 from pathlib import Path
-from PySide6.QtCore import Property,Signal,Slot,QTimer,QRectF,QPointF
+from PySide6.QtCore import Property,Signal,Slot,QTimer,QRectF,QPointF,Qt
 from PySide6.QtGui import QColor,QPainter,QImage,QLinearGradient,QRadialGradient,QPainterPath,QPolygonF,QTransform
 from PySide6.QtQuick import QQuickPaintedItem
 
@@ -46,7 +46,7 @@ class AnimatedPaint(QQuickPaintedItem):
     changed=Signal()
     def __init__(self,parent=None):
         super().__init__(parent);self.setAntialiasing(True);self._active=True;self._fps=60;self._frames=0;self._last=time.monotonic();self._time=0.
-        self.timer=QTimer(self);self.timer.timeout.connect(self.tick);self.timer.start(16)
+        self.timer=QTimer(self);self.timer.setTimerType(Qt.TimerType.PreciseTimer);self.timer.timeout.connect(self.tick);self.timer.start(16)
     def tick(self):
         now=time.monotonic();delta=min(.1,now-self._last);self._last=now
         if self._active:self._time+=delta;self._frames+=1;self.update()
@@ -69,10 +69,16 @@ class AuroraView(AnimatedPaint):
         self._brushes=[]
         for layer in range(4):
             color=QColor.fromHsvF(((125+self._hue*120+layer*18)%360)/360,.7,.95)
-            img=QImage(2,256,QImage.Format.Format_ARGB32_Premultiplied);img.fill(0)
+            img=QImage(16,256,QImage.Format.Format_ARGB32_Premultiplied);img.fill(0)
             p=QPainter(img);grad=QLinearGradient(0,0,0,256)
             for stop,alpha in [(0,0),(.35,.25),(.7,1),(1,0)]:c=QColor(color);c.setAlphaF(alpha);grad.setColorAt(stop,c)
-            p.fillRect(img.rect(),grad);p.end();self._brushes.append(img)
+            p.fillRect(img.rect(),grad)
+            # Feather both edges before caching, so adjacent columns blend into a
+            # continuous curtain instead of bright vertical barcode seams.
+            p.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
+            edge=QLinearGradient(0,0,16,0)
+            for stop,alpha in [(0,0),(.25,.6),(.5,1),(.75,.6),(1,0)]:edge.setColorAt(stop,QColor(255,255,255,round(alpha*255)))
+            p.fillRect(img.rect(),edge);p.end();self._brushes.append(img)
     def setBrightness(self,v):self._brightness=max(0,min(1,float(v)));self.update();self.changed.emit()
     brightness=Property(float,lambda self:self._brightness,setBrightness,notify=AnimatedPaint.changed)
     def setHue(self,v):self._hue=float(v);self._cache_brushes();self.update();self.changed.emit()
@@ -96,13 +102,13 @@ class AuroraView(AnimatedPaint):
         for i in range(110):
             p.setOpacity(.2+.4*(.5+.5*math.sin(t+i)));p.drawPoint(QPointF((i*7919%1000)/1000*w,(i*3571%1000)/1500*h))
         p.setCompositionMode(QPainter.CompositionMode.CompositionMode_Plus)
-        n=112 if self._fps>=60 else 72;column=w/n+1
+        n=96 if self._fps>=60 else 64;column=w/n*3
         for layer,img in enumerate(self._brushes):
             for i in range(n):
                 u=i/n;fold=math.sin(u*8+t*.55+layer)+.35*math.sin(u*21-t*.3+layer*2)
                 top=h*(.13+layer*.07)+h*.1*fold;bottom=min(top+h*(.28+.07*math.sin(u*13+t+layer)),h*.87)
-                p.setOpacity(self._brightness*(.14+.19*(.5+.5*math.sin(u*37+t+layer))))
-                p.drawImage(QRectF(u*w,top,column,bottom-top),img)
+                p.setOpacity(self._brightness*(.10+.14*(.5+.5*math.sin(u*19+t+layer))))
+                p.drawImage(QRectF(u*w-column/2,top,column,bottom-top),img)
         p.setOpacity(1);p.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
         if self._size!=(w,h):
             self._size=(w,h);self._mountain=QPainterPath();self._mountain.moveTo(0,h);self._mountain.lineTo(0,h*.89)
@@ -110,15 +116,30 @@ class AuroraView(AnimatedPaint):
             self._mountain.lineTo(w,h);self._mountain.closeSubpath()
         p.fillPath(self._mountain,QColor('#050e19'))
 
+def player_boxes(model):
+    arm=3 if model=='slim' else 4;shoulder=4+arm/2
+    base=[('head',(8,8,8),(0,24,0),(0,4,0),(0,0)),('body',(8,12,4),(0,24,0),(0,-6,0),(16,16)),
+          ('leftArm',(arm,12,4),(-shoulder,24,0),(0,-6,0),(32,48)),('rightArm',(arm,12,4),(shoulder,24,0),(0,-6,0),(40,16)),
+          ('leftLeg',(4,12,4),(-2,12,0),(0,-6,0),(16,48)),('rightLeg',(4,12,4),(2,12,0),(0,-6,0),(0,16))]
+    overlays=[(32,0),(16,32),(48,48),(40,32),(0,48),(0,32)]
+    boxes=[]
+    for (name,dims,pivot,offset,uv),outer_uv in zip(base,overlays):
+        boxes.append((name,dims,pivot,offset,uv,dims,False))
+        extra=1 if name=='head' else .5
+        boxes.append((name,tuple(d+extra for d in dims),pivot,offset,outer_uv,dims,True))
+    return boxes
+
 class PlayerView(AnimatedPaint):
     poseChanged=Signal()
     def __init__(self,parent=None):
-        super().__init__(parent);self._yaw=-.36;self._skin=QImage();self._skinPath='';self._actions=True;self._interval=15;self._action=-1;self._actionStart=-100.;self._nextAction=15.;self._lastAction=-1
+        super().__init__(parent);self._yaw=-.36;self._targetYaw=self._yaw;self._model='classic';self._skin=QImage();self._skinPath='';self._actions=True;self._interval=15;self._action=-1;self._actionStart=-100.;self._nextAction=15.;self._lastAction=-1
     def tick(self):
-        super().tick()
+        old=self._time;super().tick();self._yaw+=(self._targetYaw-self._yaw)*(1-math.exp(-24*(self._time-old)))
         if self._active and self._actions and self._time>=self._nextAction:self.triggerAction();self._nextAction=self._time+self._interval
-    def setYaw(self,v):self._yaw=float(v);self.update();self.changed.emit()
-    yawAngle=Property(float,lambda self:self._yaw,setYaw,notify=AnimatedPaint.changed)
+    def setYaw(self,v):self._targetYaw=float(v);self.update();self.changed.emit()
+    yawAngle=Property(float,lambda self:self._targetYaw,setYaw,notify=AnimatedPaint.changed)
+    def setModel(self,value):self._model='slim' if value=='slim' else 'classic';self.update();self.changed.emit()
+    skinModel=Property(str,lambda self:self._model,setModel,notify=AnimatedPaint.changed)
     def setSkin(self,path):
         if path==self._skinPath:return
         image=QImage(path)
@@ -145,27 +166,24 @@ class PlayerView(AnimatedPaint):
         idle=math.sin(t*1.5)*.025;pose['leftArm'][2]+=idle;pose['rightArm'][2]-=idle
         scale=min(w/23,h/37);center=w*.5;base=h*.94
         shadow=QRadialGradient(center,base-4,scale*9);shadow.setColorAt(0,QColor(0,0,0,70));shadow.setColorAt(1,QColor(0,0,0,0));p.setPen(QColor(0,0,0,0));p.setBrush(shadow);p.drawEllipse(QRectF(center-scale*9,base-scale*2,scale*18,scale*4))
-        # name, dimensions, pivot, center relative to pivot, skin box origin
-        boxes=[('head',(8,8,8),(0,24,0),(0,4,0),(0,0)),('body',(8,12,4),(0,24,0),(0,-6,0),(16,16)),
-               ('leftArm',(4,12,4),(-6,24,0),(0,-6,0),(32,48)),('rightArm',(4,12,4),(6,24,0),(0,-6,0),(40,16)),
-               ('leftLeg',(4,12,4),(-2,12,0),(0,-6,0),(16,48)),('rightLeg',(4,12,4),(2,12,0),(0,-6,0),(0,16))]
+        boxes=player_boxes(self._model)
         faces=[]
-        for name,dims,pivot,offset,uv in boxes:
+        for name,dims,pivot,offset,uv,texture_dims,outer in boxes:
             bw,bh,bd=dims;x,y,z=-bw/2,-bh/2,-bd/2;X,Y,Z=bw/2,bh/2,bd/2
             verts=[[(x,Y,Z),(X,Y,Z),(X,y,Z),(x,y,Z)],[(X,Y,z),(x,Y,z),(x,y,z),(X,y,z)],[(x,Y,z),(x,Y,Z),(x,y,Z),(x,y,z)],[(X,Y,Z),(X,Y,z),(X,y,z),(X,y,Z)],[(x,Y,z),(X,Y,z),(X,Y,Z),(x,Y,Z)],[(x,y,Z),(X,y,Z),(X,y,z),(x,y,z)]]
-            u,v=uv;uvs=[(u+bd,v+bd,bw,bh),(u+bd+bw+bd,v+bd,bw,bh),(u,v+bd,bd,bh),(u+bd+bw,v+bd,bd,bh),(u+bd,v,bw,bd),(u+bd+bw,v,bw,bd)]
+            u,v=uv;tw,th,td=texture_dims;uvs=[(u+td,v+td,tw,th),(u+td+tw+td,v+td,tw,th),(u,v+td,td,th),(u+td+tw,v+td,td,th),(u+td,v,tw,td),(u+td+tw,v,tw,td)]
             for face,(points,rect) in enumerate(zip(verts,uvs)):
                 world=[]
                 for vertex in points:
                     rel=tuple(vertex[i]+offset[i] for i in range(3));rel=rotate(rel,pose[name]);rel=tuple(rel[i]+pivot[i] for i in range(3))
                     if name!='body':rel=rotate((rel[0],rel[1]-18,rel[2]),pose['body']);rel=(rel[0],rel[1]+18,rel[2])
                     rel=rotate((rel[0],rel[1]-16+dy,rel[2]),(0,self._yaw,0));rel=rotate(rel,(-.12,0,0));world.append(rel)
-                polygon=QPolygonF([QPointF(center+a*scale,base-(b+16)*scale) for a,b,c in world]);faces.append((sum(v[2] for v in world)/4,polygon,rect,face))
+                polygon=QPolygonF([QPointF(center+a*scale,base-(b+16)*scale) for a,b,c in world]);faces.append((sum(v[2] for v in world)/4,polygon,rect,face,outer))
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform,False)
-        for depth,poly,(u,v,sw,sh),face in sorted(faces,key=lambda x:x[0]):
+        for depth,poly,(u,v,sw,sh),face,outer in sorted(faces,key=lambda x:x[0]):
             a,b,c,d=[poly[i] for i in range(4)]
             determinant=(b.x()-a.x())*(d.y()-a.y())-(b.y()-a.y())*(d.x()-a.x())
-            if abs(determinant)<.1:continue
+            if determinant<.1:continue
             p.save();p.setTransform(QTransform((b.x()-a.x())/sw,(b.y()-a.y())/sw,(d.x()-a.x())/sh,(d.y()-a.y())/sh,a.x(),a.y()),True)
             p.drawImage(QRectF(0,0,sw,sh),self._skin,QRectF(u,v,sw,sh));p.restore()
-            if face in (1,2,3,5):p.setPen(QColor(0,0,0,0));p.setBrush(QColor(0,0,0,35 if face in (2,3) else 65));p.drawPolygon(poly)
+            if not outer and face in (1,2,3,5):p.setPen(QColor(0,0,0,0));p.setBrush(QColor(0,0,0,35 if face in (2,3) else 65));p.drawPolygon(poly)
