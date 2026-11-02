@@ -12,6 +12,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   windows:
+    if: ${{ !contains(github.event.head_commit.message, '[installer-only]') }}
     runs-on: windows-2022
     timeout-minutes: 55
     env:
@@ -85,6 +86,143 @@ jobs:
           if ($p.ExitCode -ne 0) { throw "Minecraft demo smoke failed: $($p.ExitCode)" }
           $r = Get-Content ../evidence/minecraft-demo.json | ConvertFrom-Json
           if (-not $r.ok -or -not $r.game_window -or -not $r.renderer_initialized) { throw 'A real Minecraft window was not verified' }
+      - name: Create native Windows installer
+        run: |
+          python make_installer_art.py
+          $compiler = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $compiler)) { throw 'Inno Setup 6 is missing from the Windows build image' }
+          & $compiler installer.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
+      - name: Sign setup when a trusted publisher certificate is configured
+        env:
+          AURORA_SIGNING_PFX_BASE64: ${{ secrets.AURORA_SIGNING_PFX_BASE64 }}
+          AURORA_SIGNING_PFX_PASSWORD: ${{ secrets.AURORA_SIGNING_PFX_PASSWORD }}
+        run: ./sign_windows.ps1 -Target dist/AuroraLauncher-Setup.exe
+      - name: Install, run installed application, and uninstall in a temporary directory
+        run: python tests/installer_smoke.py dist/AuroraLauncher-Setup.exe ../evidence
+      - name: Retrieve previous shipped EXE for same-machine comparison
+        uses: actions/download-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-tested
+          run-id: 41026525241
+          github-token: ${{ github.token }}
+          path: baseline
+      - name: Measure startup, foreground and background resources against 6.1.0
+        run: python tests/windows_performance.py ../baseline/AuroraLauncher.exe dist/AuroraLauncher/AuroraLauncher.exe ../evidence/performance.json
+      - name: Inspect Authenticode status and available Defender protection
+        run: |
+          $files = @('dist/AuroraLauncher/AuroraLauncher.exe','dist/AuroraLauncher-Setup.exe')
+          $signatures = @($files | ForEach-Object { $sig = Get-AuthenticodeSignature $_; @{ file = $_; status = [string]$sig.Status; publisher = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { $null } } })
+          $signatures | ConvertTo-Json -Depth 4 | Out-File ../evidence/signatures.json -Encoding utf8
+          try {
+            $status = Get-MpComputerStatus -ErrorAction Stop
+            if ($status.AntivirusEnabled) {
+              Start-MpScan -ScanType CustomScan -ScanPath "$pwd\dist" -ErrorAction Stop
+              $detections = @(Get-MpThreatDetection -ErrorAction Stop | Where-Object { $_.Resources -match 'AuroraLauncher' })
+              @{available=$true; scan_completed=$true; detections=$detections.Count} | ConvertTo-Json | Out-File ../evidence/defender.json -Encoding utf8
+              if ($detections.Count -gt 0) { throw 'Defender reported a detection in the build output' }
+            } else {
+              @{available=$false; scan_completed=$false; reason='Defender is not enabled on this CI image'} | ConvertTo-Json | Out-File ../evidence/defender.json -Encoding utf8
+            }
+          } catch {
+            if (Test-Path ../evidence/defender.json) { throw }
+            @{available=$false; scan_completed=$false; reason=$_.Exception.Message} | ConvertTo-Json | Out-File ../evidence/defender.json -Encoding utf8
+          }
+      - name: Collect executable and corresponding source
+        run: |
+          New-Item -ItemType Directory -Force ../deliverables | Out-Null
+          Copy-Item dist/AuroraLauncher-Setup.exe ../deliverables/AuroraLauncher-Setup.exe
+          Compress-Archive -Path dist/AuroraLauncher -DestinationPath ../deliverables/AuroraLauncher-Portable.zip
+          Get-FileHash ../deliverables/AuroraLauncher-Setup.exe -Algorithm SHA256 | Format-List | Out-File ../deliverables/SHA256.txt -Encoding utf8
+          Copy-Item ../LICENSE ../deliverables/LICENSE.txt
+          Copy-Item assets/THIRD_PARTY_NOTICES.txt ../deliverables/THIRD_PARTY_NOTICES.txt
+          git rev-parse HEAD | Out-File ../deliverables/SOURCE_COMMIT.txt -Encoding utf8
+          python package_source.py
+      - name: Upload tested Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-tested
+          path: deliverables/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload tests, screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-evidence
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve executable for diagnosing failed integration tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-diagnostic-EXE
+          path: desktop/dist/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload corresponding source
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-source
+          path: AuroraLauncher-Desktop-source.zip
+          if-no-files-found: error
+          retention-days: 30
+
+
+  installer:
+    if: ${{ contains(github.event.head_commit.message, '[installer-only]') }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: '1'
+      QT_QUICK_BACKEND: software
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify that the previously tested application code is unchanged
+        run: |
+          $base = 'a992dbf8903017c84e45c8a75080b1a1f3e275e9'
+          $changed = @(git diff --name-only $base HEAD)
+          foreach ($path in $changed) {
+            if ($path -notmatch '^desktop/(installer\.iss|installer_languages/|make_installer_art\.py|tests/(installer_smoke|windows_performance)\.py)' -and $path -ne '.github/workflows/windows-rebuild.yml') {
+              throw "Application source changed: $path; a full rebuild is required."
+            }
+          }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install packaging and measurement tools
+        run: python -m pip install --index-url https://pypi.org/simple --timeout 20 --retries 2 pillow==13.0.0 psutil==7.2.2
+      - name: Retrieve the application that passed unit, UI, loader and Minecraft checks
+        uses: actions/download-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-diagnostic-EXE
+          run-id: 41415135317
+          github-token: ${{ github.token }}
+          path: desktop/dist
+      - name: Carry the corresponding completed checks into the evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-evidence
+          run-id: 41415135317
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Prepare setup icon and record the tested application source
+        run: |
+          python make_assets.py
+          @{ application_commit = 'a992dbf8903017c84e45c8a75080b1a1f3e275e9'; application_test_run = 41415135317; installer_commit = '${{ github.sha }}' } | ConvertTo-Json | Out-File ../evidence/application-provenance.json -Encoding utf8
+      - name: Sign launcher when a trusted publisher certificate is configured
+        env:
+          AURORA_SIGNING_PFX_BASE64: ${{ secrets.AURORA_SIGNING_PFX_BASE64 }}
+          AURORA_SIGNING_PFX_PASSWORD: ${{ secrets.AURORA_SIGNING_PFX_PASSWORD }}
+        run: ./sign_windows.ps1 -Target dist/AuroraLauncher/AuroraLauncher.exe
       - name: Create native Windows installer
         run: |
           python make_installer_art.py

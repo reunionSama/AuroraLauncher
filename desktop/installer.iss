@@ -36,9 +36,9 @@ VersionInfoVersion={#AppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
-Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
-Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
+Name: "chinesesimp"; MessagesFile: "installer_languages\ChineseSimplified.isl"
+Name: "japanese"; MessagesFile: "installer_languages\Japanese.isl"
+Name: "korean"; MessagesFile: "installer_languages\Korean.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -58,7 +58,11 @@ procedure InitializeWizard;
 begin
   WizardForm.Color := $00F6F4ED;
   WizardForm.MainPanel.Color := clWhite;
-  WizardForm.WelcomeLabel1.Font.Size := 22;
+  WizardForm.WelcomeLabel1.Font.Size := 20;
+  WizardForm.WelcomeLabel1.AutoSize := False;
+  WizardForm.WelcomeLabel1.Height := ScaleY(105);
+  WizardForm.WelcomeLabel2.Top := WizardForm.WelcomeLabel1.Top + WizardForm.WelcomeLabel1.Height + ScaleY(12);
+  WizardForm.WelcomeLabel2.Height := WizardForm.WelcomePage.Height - WizardForm.WelcomeLabel2.Top - ScaleY(16);
   WizardForm.WelcomeLabel1.Font.Color := $00382E17;
   WizardForm.WelcomeLabel2.Font.Size := 11;
   WizardForm.FinishedHeadingLabel.Font.Size := 20;
