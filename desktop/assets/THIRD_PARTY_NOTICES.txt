@@ -82,3 +82,6 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 https://asm.ow2.io/
+
+
+Loader identification icons: reused from ZalithLauncher2, commit e6e9abebbe29af065c555d432c48a3779e435891, GPL-3.0-or-later. The exact source paths and Git blob hashes are recorded in loader-sources.json. Fabric API and Quilt API use their loader family icons. Project names and marks remain with their owners; use identifies compatibility and does not imply endorsement.

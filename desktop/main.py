@@ -24,8 +24,13 @@ def main():
     if sys.platform=='win32':
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('reunionSama.AuroraLauncher.Desktop6')
-    font_id=QFontDatabase.addApplicationFont(str(resources()/'assets/NotoSansCJKsc-Regular.otf'))
-    families=QFontDatabase.applicationFontFamilies(font_id);font=families[0] if families else 'Microsoft YaHei UI'
+    # Windows already has CJK fallback fonts; loading the 16 MiB bundled font
+    # on every launch needlessly copies font tables and expands the glyph cache.
+    font='Microsoft YaHei UI'
+    if sys.platform!='win32':
+        font_id=QFontDatabase.addApplicationFont(str(resources()/'assets/NotoSansCJKsc-Regular.otf'))
+        families=QFontDatabase.applicationFontFamilies(font_id)
+        if families:font=families[0]
     qmlRegisterType(AuroraView,'Aurora',1,0,'AuroraView');qmlRegisterType(PlayerView,'Aurora',1,0,'PlayerView')
     store=Store();backend=Bridge(store,resources()/'assets',args.self_test or args.game_smoke)
     engine=QQmlApplicationEngine();context=engine.rootContext();context.setContextProperty('backend',backend);context.setContextProperty('appFont',font);context.setContextProperty('assetBase',QUrl.fromLocalFile(str(resources()/'assets')).toString())
@@ -39,6 +44,24 @@ def main():
         if report_path:report_path.parent.mkdir(parents=True,exist_ok=True);report_path.write_text(json.dumps({'ok':False,'errors':errors},ensure_ascii=False,indent=2),'utf-8')
         backend.close();return 2
     root=engine.rootObjects()[0]
+    backend.setForeground(root.isActive())
+    root.activeChanged.connect(lambda:backend.setForeground(root.isActive()))
+    def ui(name):
+        found=root.findChild(QObject,name)
+        if found is not None:return found
+        stack=[root.contentItem()];seen=set()
+        for popup_name in ('installerDialog','setupWizard'):
+            popup=root.findChild(QObject,popup_name)
+            if popup is not None and popup.property('contentItem') is not None:stack.append(popup.property('contentItem'))
+        import shiboken6
+        while stack:
+            item=stack.pop()
+            address=shiboken6.getCppPointer(item)[0]
+            if address in seen:continue
+            seen.add(address)
+            if item.objectName()==name:return item
+            stack.extend(item.childItems())
+        raise RuntimeError('Missing visual object '+name)
     game_timer=None
     if args.game_smoke:
         from aurora.smoke import game_smoke
@@ -50,7 +73,10 @@ def main():
         backend.addOffline('AuroraTester')
         def check_page():
             try:
-                page=pages[state['index']];root.setProperty('page',page)
+                page=pages[state['index']]
+                if page=='resources':
+                    backend._results=[{'id':'ui-icon-fixture','title':'UI icon check','description':'Local thumbnail fixture','downloads':1,'author':'Aurora','kind':'mod','icon':'','iconLocal':(resources()/'assets/icon.png').as_uri()}];backend.dataChanged.emit()
+                root.setProperty('page',page)
                 QTimer.singleShot(260,capture)
             except Exception as e:finish(str(e))
         def capture():
@@ -71,6 +97,7 @@ def main():
                     QTest.mouseMove(root,point+QPoint(65,0),30)
                     QTest.mouseRelease(root,Qt.MouseButton.LeftButton,Qt.KeyboardModifier.NoModifier,point+QPoint(65,0))
                     report['manual_rotation']=abs(player.property('yawAngle')-old)>.1;player.triggerAction()
+                if page=='resources':report['project_icon']=bool(ui('projectIcon_ui-icon-fixture').property('iconReady'))
                 if page=='about':report['sponsor_button']=root.findChild(QObject,'sponsorButton') is not None
                 if page=='accounts':
                     from PySide6.QtGui import QDesktopServices
@@ -108,12 +135,54 @@ def main():
                 backend._installer={'minecraft':'1.20.1','rows':[{'kind':kind,'title':title,'status':'可以选择','choices':[{'id':'test-build','label':'UI fixture build'}],'loading':False} for kind,title in COMPONENTS]};backend.installerChanged.emit()
                 dialog=root.findChild(QObject,'installerDialog');QMetaObject.invokeMethod(dialog,'open')
                 report['installer_dialog']=bool(dialog.property('visible'));state['installer_dialog']=dialog
-                QTimer.singleShot(160,close_installer)
+                QTimer.singleShot(160,select_fabric)
+            except Exception as e:finish(str(e))
+        def select_fabric():
+            try:
+                combo=ui('componentSelect_fabric');combo.setProperty('currentIndex',1);combo.activated.emit(1)
+                QTimer.singleShot(180,verify_loader_exclusion)
+            except Exception as e:finish(str(e))
+        def verify_loader_exclusion():
+            try:
+                fabric=ui('componentSelect_fabric');forge=ui('componentSelect_forge')
+                report['loader_exclusion']=fabric.property('currentIndex')==1 and not forge.property('enabled') and forge.property('currentIndex')==0
+                root.grabWindow().save(str(shots/'installer.png'))
+                ui('clearLoaderButton').clicked.emit()
+                QTimer.singleShot(120,select_forge)
+            except Exception as e:finish(str(e))
+        def select_forge():
+            try:
+                combo=ui('componentSelect_forge');combo.setProperty('currentIndex',1);combo.activated.emit(1)
+                QTimer.singleShot(150,close_installer)
             except Exception as e:finish(str(e))
         def close_installer():
-            from PySide6.QtCore import QMetaObject
-            root.grabWindow().save(str(shots/'installer.png'));QMetaObject.invokeMethod(state.pop('installer_dialog'),'close')
-            state['language_index']=0;report['languages']={};test_language()
+            try:
+                from PySide6.QtCore import QMetaObject
+                fabric=ui('componentSelect_fabric');forge=ui('componentSelect_forge')
+                report['loader_switch_resets']=fabric.property('currentIndex')==0 and not fabric.property('enabled') and forge.property('currentIndex')==1
+                from aurora.installers import COMPONENTS
+                report['loader_icons']=all(bool(ui('loaderIcon_'+kind).property('iconReady')) for kind,title in COMPONENTS)
+                QMetaObject.invokeMethod(state.pop('installer_dialog'),'close')
+                wizard=root.findChild(QObject,'setupWizard');QMetaObject.invokeMethod(wizard,'open');state['wizard']=wizard
+                QTimer.singleShot(120,check_setup)
+            except Exception as e:finish(str(e))
+        def check_setup():
+            try:
+                wizard=state['wizard'];report['setup_wizard']=wizard.property('visible')
+                root.grabWindow().save(str(shots/'setup-language.png'))
+                ui('setupLanguage_en_US').clicked.emit()
+                report['setup_language']=backend.settings['language']=='en_US'
+                wizard.setProperty('step',1);QTimer.singleShot(120,capture_setup_theme)
+            except Exception as e:finish(str(e))
+        def capture_setup_theme():
+            root.grabWindow().save(str(shots/'setup-theme.png'));state['wizard'].setProperty('step',2);QTimer.singleShot(120,skip_setup)
+        def skip_setup():
+            try:
+                root.grabWindow().save(str(shots/'setup-account.png'))
+                root.findChild(QObject,'setupSkip').clicked.emit()
+                report['setup_skip']=not state.pop('wizard').property('visible') and backend.settings['setupCompleted'] and json.loads(store.file.read_text('utf-8'))['setupCompleted']
+                state['language_index']=0;report['languages']={};test_language()
+            except Exception as e:finish(str(e))
         def test_language():
             language=['zh_CN','en_US','ja_JP','ko_KR'][state['language_index']]
             backend.setSetting('language',language);root.setProperty('page','home')
@@ -149,7 +218,7 @@ def main():
                 root.grabWindow().save(str(shots/'compact.png'));finish()
             except Exception as e:finish(str(e))
         def finish(error=''):
-            report['warnings']=errors;report['error']=error;report['ok']=not error and all(report['pages'].values()) and report.get('manual_rotation',False) and report.get('sponsor_button',False) and report.get('microsoft_link_button',False) and report.get('compact_window',False) and report.get('toolbar_labels_fit',False) and report.get('log_search',False) and report.get('installer_dialog',False) and report.get('cape_preview_binding',False) and len(report.get('languages',{}))==4 and all(report.get('languages',{}).values())
+            report['warnings']=errors;report['error']=error;report['ok']=not error and not errors and all(report['pages'].values()) and report.get('manual_rotation',False) and report.get('sponsor_button',False) and report.get('microsoft_link_button',False) and report.get('compact_window',False) and report.get('toolbar_labels_fit',False) and report.get('log_search',False) and report.get('installer_dialog',False) and report.get('cape_preview_binding',False) and all(report.get(key,False) for key in ('project_icon','loader_exclusion','loader_switch_resets','loader_icons','setup_wizard','setup_language','setup_skip')) and len(report.get('languages',{}))==4 and all(report.get('languages',{}).values())
             if report_path:report_path.parent.mkdir(parents=True,exist_ok=True);report_path.write_text(json.dumps(report,ensure_ascii=False,indent=2),'utf-8')
             root.close();app.exit(0 if report['ok'] else 3)
         root.setWidth(1280);root.setHeight(800)

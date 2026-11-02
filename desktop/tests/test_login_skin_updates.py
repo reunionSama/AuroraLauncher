@@ -105,12 +105,12 @@ def test_late_skin_result_cannot_replace_newly_selected_account(app,tmp_path):
         bridge.addOffline('OfflineTester');assert bridge.skinPath==str(ASSETS/'aurora_skin.png')
     finally:bridge.close()
 
-def release(stamp='2026-10-31T01:00:00Z'):
+def release(stamp='2026-11-03T01:00:00Z'):
     return {'tag_name':'publicLauncher','name':'Aurora','body':'更新说明\n修复问题','assets':[{'name':'AuroraLauncher.exe','browser_download_url':'https://github.com/reunionSama/AuroraLauncher/releases/download/publicLauncher/AuroraLauncher.exe','updated_at':stamp,'digest':'sha256:'+'a'*64,'size':100}]}
 
 def web_pages():
     body='<div class="markdown-body"><p>更新说明<br>修复问题</p></div>'
-    assets='<ul><li><a href="/reunionSama/AuroraLauncher/releases/download/publicLauncher/AuroraLauncher.exe">AuroraLauncher.exe</a><span>sha256:'+'a'*64+'</span><relative-time datetime="2026-10-31T01:00:00Z"></relative-time></li></ul>'
+    assets='<ul><li><a href="/reunionSama/AuroraLauncher/releases/download/publicLauncher/AuroraLauncher.exe">AuroraLauncher.exe</a><span>sha256:'+'a'*64+'</span><relative-time datetime="2026-11-03T01:00:00Z"></relative-time></li></ul>'
     return body,assets
 
 @pytest.mark.parametrize('status',[403,429])
@@ -147,7 +147,7 @@ def test_old_public_launcher_cannot_downgrade_desktop():assert newer_asset(relea
 def test_reuploading_old_version_does_not_offer_a_downgrade():
     value=release();value['body']='公测 V1.0.0';assert newer_asset(value) is None
 
-def test_changed_file_in_same_tag_is_detected():assert newer_asset(release())['version']=='20261031-010000'
+def test_changed_file_in_same_tag_is_detected():assert newer_asset(release())['version']=='20261103-010000'
 
 def test_unsigned_update_cannot_be_downloaded():
     value=release();value['assets'][0]['digest']=''

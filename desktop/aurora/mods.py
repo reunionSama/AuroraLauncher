@@ -3,10 +3,11 @@ from __future__ import annotations
 import json,os,re,shutil,uuid,zipfile
 from pathlib import Path
 from .storage import atomic_json,load_json,safe_path
+from .modrinth_net import ModrinthAPI
 
 API="https://api.modrinth.com/v2"
 class Modrinth:
-    def __init__(self,engine):self.e=engine;self.net=engine.net
+    def __init__(self,engine):self.e=engine;self.net=engine.net;self.api=ModrinthAPI(engine)
     def search(self,query,kind="mod",offset=0):
         import urllib.parse
         facets=[["project_type:"+kind]]
@@ -16,7 +17,7 @@ class Modrinth:
             loader=self.e.loader(version)
             if kind=="mod" and loader!="vanilla":facets.append(["categories:"+loader])
         qs=urllib.parse.urlencode({"query":query,"limit":30,"offset":offset,"facets":json.dumps(facets),"index":"relevance"})
-        value=self.net.json(API+"/search?"+qs,ttl=120)
+        value=self.api.json(API+"/search?"+qs,ttl=120,stale=True)
         return [{"id":x['project_id'],"title":x['title'],"description":x.get('description',''),"downloads":x.get('downloads',0),"icon":x.get('icon_url') or '',"kind":kind,"author":x.get('author','')} for x in value.get('hits',[])]
     def versions(self,project,kind="mod"):
         import urllib.parse
@@ -26,7 +27,7 @@ class Modrinth:
             params['game_versions']=json.dumps([self.e.base_version(version)])
             loader=self.e.loader(version)
             if kind=="mod" and loader!="vanilla":params['loaders']=json.dumps([loader])
-        data=self.net.json(API+f"/project/{project}/version?"+urllib.parse.urlencode(params),ttl=180)
+        data=self.api.json(API+f"/project/{project}/version?"+urllib.parse.urlencode(params),ttl=180)
         if not data:raise RuntimeError("未找到适用于当前游戏版本和加载器的文件")
         return data
     def install(self,project,kind="mod",version_id=""):
@@ -39,7 +40,7 @@ class Modrinth:
         def resolve(pid,exact=None):
             if pid in visited:return
             visited.add(pid)
-            value=self.net.json(API+"/version/"+exact,ttl=180) if exact else self.versions(pid,kind)[0]
+            value=self.api.json(API+"/version/"+exact,ttl=180) if exact else self.versions(pid,kind)[0]
             file=next((f for f in value['files'] if f.get('primary')),value['files'][0])
             name=file['filename'];target=safe_path(stage,name)
             if Path(name).name!=name:raise ValueError("模组文件名无效")

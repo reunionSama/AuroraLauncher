@@ -41,15 +41,15 @@ def newer_asset(release):
     declared=re.findall(r'(?i)\bv(\d+)\.(\d+)\.(\d+)\b',(release.get('name','') or '')+'\n'+(release.get('body','') or ''))
     if declared and max(tuple(map(int,v)) for v in declared)<=tuple(map(int,VERSION.split('.'))):return None
     baseline=datetime.fromisoformat(BUILD_RELEASED_AT.replace('Z','+00:00'))
-    for asset in release.get('assets',[]):
-        if asset.get('name')!='AuroraLauncher.exe':continue
+    for asset in sorted(release.get('assets',[]),key=lambda a:a.get('name')!='AuroraLauncher-Setup.exe'):
+        if asset.get('name') not in ('AuroraLauncher-Setup.exe','AuroraLauncher.exe'):continue
         url=asset.get('browser_download_url','');digest=asset.get('digest','')
-        if url!=PROJECT+'/releases/download/publicLauncher/AuroraLauncher.exe':continue
+        if url!=PROJECT+'/releases/download/publicLauncher/'+asset['name']:continue
         try:stamp=datetime.fromisoformat(asset.get('updated_at','').replace('Z','+00:00'))
         except ValueError:continue
         if stamp<=baseline:continue
         if not re.fullmatch(r'sha256:[a-fA-F0-9]{64}',digest):raise ValueError('新版未提供 SHA-256，请稍后重试检查更新')
-        return {'title':release.get('name') or 'AuroraLauncher 更新','body':release.get('body') or '发布者未填写更新说明','url':url,'digest':digest[7:].lower(),'size':asset.get('size',0),'version':stamp.strftime('%Y%m%d-%H%M%S')}
+        return {'title':release.get('name') or 'AuroraLauncher 更新','body':release.get('body') or '发布者未填写更新说明','url':url,'digest':digest[7:].lower(),'size':asset.get('size',0),'filename':asset['name'],'version':stamp.strftime('%Y%m%d-%H%M%S')}
     return None
 
 class UpdateChecker:

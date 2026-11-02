@@ -33,6 +33,7 @@ ApplicationWindow {
     property var pages: [ {key:"home",label:root.t("主页"),icon:"⌂"},{key:"versions",label:root.t("版本管理"),icon:"▣"},{key:"resources",label:root.t("资源中心"),icon:"◇"},{key:"instances",label:root.t("实例与存档"),icon:"▤"},{key:"accounts",label:root.t("账号管理"),icon:"◎"},{key:"multiplayer",label:root.t("多人联机"),icon:"♧"},{key:"downloads",label:root.t("下载任务"),icon:"↓"},{key:"tools",label:root.t("工具中心"),icon:"✧"},{key:"logs",label:root.t("实时日志"),icon:"≡"},{key:"settings",label:root.t("个性化设置"),icon:"⚙"},{key:"about",label:root.t("关于"),icon:"ⓘ"} ]
     property var titles: ({home:root.t("主页"),versions:root.t("版本管理"),resources:root.t("资源中心"),instances:root.t("实例与存档"),accounts:root.t("账号管理"),multiplayer:root.t("陶瓦多人联机"),downloads:root.t("下载任务"),tools:root.t("工具中心"),logs:root.t("实时日志"),settings:root.t("设置"),about:root.t("关于")})
     Component.onCompleted: {
+        if(!cfg.setupCompleted && !backend.testing) Qt.callLater(function(){ setupWizard.open() })
         if(cfg.windowWidth>0) root.width=Math.min(Math.max(minimumWidth,cfg.windowWidth),Screen.desktopAvailableWidth)
         if(cfg.windowHeight>0) root.height=Math.min(Math.max(minimumHeight,cfg.windowHeight),Screen.desktopAvailableHeight-36)
     }
@@ -46,6 +47,7 @@ ApplicationWindow {
     function t(text) { var selected=cfg.language;return backend.translate(String(text)) }
     function navigate(target) {
         page=target
+        if(target==="versions") backend.ensureVersions()
         if(target==="resources") { backend.listFiles("mods"); if(backend.modResults.length===0) backend.searchMods("","mod") }
         if(target==="tools") backend.preflight()
         if(target==="instances") backend.refresh()
@@ -144,7 +146,7 @@ ApplicationWindow {
         id:homePage
         Item {
             objectName:"homePage"
-            AuroraView { id:sky;objectName:"auroraSky";anchors.fill:parent;visible:cfg.sky;renderActive:root.page==="home"&&root.active&&root.visibility!==Window.Minimized;fps:cfg.fps;brightness:cfg.brightness;speed:cfg.speed;hue:cfg.hue }
+            AuroraView { id:sky;objectName:"auroraSky";anchors.fill:parent;visible:cfg.sky;renderActive:cfg.sky&&!root.reducedMotion&&root.page==="home"&&root.active&&root.visibility!==Window.Minimized;fps:cfg.performanceMode==="balanced"?Math.min(30,cfg.fps):cfg.fps;brightness:cfg.brightness;speed:cfg.speed;hue:cfg.hue }
             RowLayout {
                 anchors.fill:parent;anchors.margins:24;spacing:24
                 Item {
@@ -175,7 +177,7 @@ ApplicationWindow {
                         RowLayout {LabelText{text:root.t("准备下一次冒险");font.bold:true;font.pixelSize:17}Item{Layout.fillWidth:true}AButton{text:"＋";implicitWidth:40;implicitHeight:36;onClicked:root.navigate("accounts")}}
                         Item {
                             Layout.fillWidth:true;Layout.fillHeight:true;Layout.minimumHeight:root.height<740?95:185
-                            PlayerView {id:player;objectName:"playerPreview";anchors.fill:parent;skinPath:backend.skinPath;skinModel:backend.skinModel;capePath:backend.capePath;fps:cfg.fps;actions:cfg.actions;interval:cfg.interval;renderActive:root.page==="home"&&root.active&&root.visibility!==Window.Minimized}
+                            PlayerView {id:player;objectName:"playerPreview";anchors.fill:parent;skinPath:backend.skinPath;skinModel:backend.skinModel;capePath:backend.capePath;fps:cfg.performanceMode==="balanced"?30:cfg.fps;actions:cfg.actions;interval:cfg.interval;renderActive:!root.reducedMotion&&root.page==="home"&&root.active&&root.visibility!==Window.Minimized}
                             MouseArea {anchors.fill:parent;property real lastX:0;property bool dragged:false;cursorShape:pressed?Qt.ClosedHandCursor:Qt.OpenHandCursor;onPressed:mouse=>{lastX=mouse.x;dragged=false}onPositionChanged:mouse=>{if(pressed){var d=mouse.x-lastX;if(Math.abs(d)>1)dragged=true;player.yawAngle+=d*.012;lastX=mouse.x}}onClicked:if(!dragged)player.triggerAction()}
                         }
                         MutedText{text:root.t(backend.skinStatus);Layout.fillWidth:true;maximumLineCount:1;elide:Text.ElideRight;horizontalAlignment:Text.AlignHCenter;font.pixelSize:10}
@@ -248,6 +250,7 @@ ApplicationWindow {
                 Field{id:modSearch;objectName:"modSearch";Layout.fillWidth:true;placeholderText:root.t("搜索模组、整合包、资源包或光影");onAccepted:backend.searchMods(text,parent.parent.kinds[resourceKind.currentIndex])}
                 AButton{text:root.t("搜索");primary:true;onClicked:backend.searchMods(modSearch.text,parent.parent.kinds[resourceKind.currentIndex])}
             }
+            MutedText{text:root.t(run.resourceStatus||"");visible:text.length>0;Layout.fillWidth:true}
             RowLayout {
                 Layout.fillWidth:true;Layout.fillHeight:true;spacing:16
                 Card {
@@ -255,6 +258,10 @@ ApplicationWindow {
                     ListView {id:modList;objectName:"modResultList";Layout.fillWidth:true;Layout.fillHeight:true;clip:true;spacing:10;model:backend.modResults
                         delegate:Rectangle {required property var modelData;width:modList.width;height:124;color:root.panel2;radius:13
                             RowLayout{anchors.fill:parent;anchors.margins:14;spacing:14
+                                Rectangle{Layout.preferredWidth:58;Layout.preferredHeight:58;radius:12;color:root.panel;border.color:root.line
+                                    Image{id:projectIcon;property bool iconReady:status===Image.Ready;objectName:"projectIcon_"+modelData.id;anchors.fill:parent;anchors.margins:5;source:modelData.iconLocal||"";sourceSize.width:96;sourceSize.height:96;asynchronous:true;fillMode:Image.PreserveAspectFit}
+                                    LabelText{anchors.centerIn:parent;visible:projectIcon.status!==Image.Ready;text:modelData.title.substring(0,1);font.bold:true;font.pixelSize:24;color:root.accent}
+                                }
                                 ColumnLayout{Layout.fillWidth:true;spacing:6;LabelText{text:modelData.title;font.bold:true;font.pixelSize:17;Layout.fillWidth:true;elide:Text.ElideRight;maximumLineCount:1}MutedText{text:root.t(modelData.description);Layout.fillWidth:true;maximumLineCount:2;elide:Text.ElideRight}MutedText{text:modelData.author+" · "+Number(modelData.downloads).toLocaleString(Qt.locale(cfg.language))+root.t(" 次下载")}}
                                 AButton{text:root.t("安装");primary:true;enabled:!run.busy;onClicked:backend.installMod(modelData.id,modelData.kind)}
                             }
@@ -446,10 +453,12 @@ ApplicationWindow {
                         Select{objectName:"languageSelector";Layout.preferredWidth:260;model:[{id:"zh_CN",name:"简体中文"},{id:"ja_JP",name:"日本語"},{id:"ko_KR",name:"한국어"},{id:"en_US",name:"English"}];textRole:"name";currentIndex:Math.max(0,root.indexFor(model,"id",cfg.language));onActivated:backend.setSetting("language",model[currentIndex].id)}
                     }
                     MutedText{text:root.t("语言切换立即生效，并会记住你的选择。");Layout.fillWidth:true}
+                    AButton{text:root.t("重新打开首次配置");onClicked:{setupWizard.step=0;setupWizard.open()}}
                 }
 
                 Card{Layout.fillWidth:true
                     LabelText{text:root.t("极光与人物");font.bold:true;font.pixelSize:18}
+                    RowLayout{LabelText{text:root.t("优先节省性能");Layout.fillWidth:true}Switch{checked:cfg.performanceMode==="balanced";onToggled:backend.setSetting("performanceMode",checked?"balanced":"smooth")}}
                     RowLayout{LabelText{text:root.t("极光光幕");Layout.fillWidth:true}Switch{checked:cfg.sky;onToggled:backend.setSetting("sky",checked)}}
                     RowLayout{LabelText{text:root.t("减少界面过渡动画");Layout.fillWidth:true}Switch{checked:root.reducedMotion;onToggled:backend.setSetting("reduceMotion",checked)}}
                     RowLayout{LabelText{text:root.t("20 种随机人物动作");Layout.fillWidth:true}Switch{checked:cfg.actions;onToggled:backend.setSetting("actions",checked)}}
@@ -467,6 +476,9 @@ ApplicationWindow {
                     RowLayout{LabelText{text:root.t("窗口大小");Layout.preferredWidth:185}Field{id:gameWidth;text:String(cfg.width);Layout.preferredWidth:110;validator:IntValidator{bottom:640;top:7680}onEditingFinished:if(acceptableInput)backend.setSetting("width",Number(text))}LabelText{text:"×"}Field{id:gameHeight;text:String(cfg.height);Layout.preferredWidth:110;validator:IntValidator{bottom:480;top:4320}onEditingFinished:if(acceptableInput)backend.setSetting("height",Number(text))}Item{Layout.fillWidth:true}}
                     RowLayout{LabelText{text:root.t("并行下载：")+cfg.workers+root.t(" 个");Layout.preferredWidth:185}Slider{from:2;to:32;stepSize:1;value:cfg.workers;Layout.fillWidth:true;enabled:!run.busy;onMoved:backend.setSetting("workers",Math.round(value))}}
                     RowLayout{LabelText{text:root.t("下载源");Layout.preferredWidth:185}Select{Layout.preferredWidth:220;model:[root.t("自动选择 + 失败回退"),root.t("官方优先"),root.t("BMCLAPI 优先")];textRole:"";currentIndex:["auto","official","bmclapi"].indexOf(cfg.source);enabled:!run.busy;onActivated:backend.setSetting("source",["auto","official","bmclapi"][currentIndex])}Item{Layout.fillWidth:true}}
+                    LabelText{text:root.t("Modrinth 备用接口（可选）")}
+                    Field{objectName:"modrinthEndpoint";Layout.fillWidth:true;text:cfg.modrinthApi;placeholderText:"https://…/v2";onEditingFinished:backend.setSetting("modrinthApi",text)}
+                    MutedText{text:root.t("留空使用官方接口；仅填写你信任的 HTTPS 服务，下载文件仍校验哈希。");Layout.fillWidth:true}
                     LabelText{text:root.t("Java 路径（留空时自动选择对应版本）")}
                     RowLayout{Field{id:javaPath;Layout.fillWidth:true;text:cfg.java;placeholderText:root.t("自动管理 Java 8 / 17 / 21");enabled:!run.busy;onEditingFinished:backend.setSetting("java",text)}AButton{text:root.t("选择 Java");enabled:!run.busy;onClicked:backend.chooseFile("java")}AButton{text:root.t("扫描");onClicked:backend.scanJava()}}
                     LabelText{text:root.t("附加 JVM 参数")}
@@ -511,7 +523,10 @@ ApplicationWindow {
         property string selectedVersion:""
         property var apiSelections:({})
         function choose(kind,id) {
-            if(kind==="fabric-api"||kind==="quilt-api") { var copy=Object.assign({},apiSelections);copy[kind]=id;apiSelections=copy;return }
+            if(kind==="fabric-api"||kind==="quilt-api") {
+                if((kind==="fabric-api"&&primaryLoader!=="fabric")||(kind==="quilt-api"&&primaryLoader!=="quilt")) return
+                var copy=Object.assign({},apiSelections);copy[kind]=id;apiSelections=copy;return
+            }
             if(id) { primaryLoader=kind;selectedVersion=id;apiSelections=({}) }
             else if(primaryLoader===kind) { primaryLoader="vanilla";selectedVersion="";apiSelections=({}) }
         }
@@ -527,18 +542,19 @@ ApplicationWindow {
                             required property var modelData
                             Layout.fillWidth:true;implicitHeight:94;color:root.panel2;radius:16
                             property bool isApi:modelData.kind==="fabric-api"||modelData.kind==="quilt-api"
-                            property bool compatible:!isApi||(modelData.kind==="fabric-api"&&installerDialog.primaryLoader==="fabric")||(modelData.kind==="quilt-api"&&installerDialog.primaryLoader==="quilt")
+                            property bool compatible:(!isApi&&(installerDialog.primaryLoader==="vanilla"||installerDialog.primaryLoader===modelData.kind))||(modelData.kind==="fabric-api"&&installerDialog.primaryLoader==="fabric")||(modelData.kind==="quilt-api"&&installerDialog.primaryLoader==="quilt")
                             property string selection:isApi?(installerDialog.apiSelections[modelData.kind]||""):(installerDialog.primaryLoader===modelData.kind?installerDialog.selectedVersion:"")
                             RowLayout {anchors.fill:parent;anchors.margins:14;spacing:14
-                                Rectangle{width:42;height:42;radius:12;color:modelData.kind.indexOf("fabric")>=0?"#52636e":modelData.kind==="optifine"?"#a76a2a":"#394b65";Text{anchors.centerIn:parent;text:modelData.title.substring(0,2);color:"#eefaff";font.bold:true;font.pixelSize:16}}
-                                ColumnLayout{Layout.fillWidth:true;LabelText{text:modelData.title;font.bold:true;font.pixelSize:17}MutedText{text:compatible?root.t(modelData.status):root.t("请先选择对应加载器");Layout.fillWidth:true;maximumLineCount:2}}
+                                Rectangle{width:42;height:42;radius:12;color:root.panel2;Image{property bool iconReady:status===Image.Ready;objectName:"loaderIcon_"+modelData.kind;anchors.fill:parent;anchors.margins:5;source:assetBase+"/loaders/"+modelData.kind+".png";fillMode:Image.PreserveAspectFit;sourceSize.width:64;sourceSize.height:64}}
+                                ColumnLayout{Layout.fillWidth:true;LabelText{text:modelData.title;font.bold:true;font.pixelSize:17}MutedText{text:compatible?root.t(modelData.status):(isApi?root.t("请先选择对应加载器"):root.t("与当前加载器不兼容，请先取消当前选择"));Layout.fillWidth:true;maximumLineCount:2}}
                                 BusyIndicator{running:modelData.loading;visible:running;Layout.preferredWidth:28;Layout.preferredHeight:28}
-                                Select{objectName:"componentSelect_"+modelData.kind;Layout.preferredWidth:Math.min(295,installerDialog.width*.36);model:[{id:"",label:root.t("不安装")}].concat(modelData.choices);textRole:"label";enabled:compatible&&!modelData.loading&&modelData.choices.length>0;currentIndex:Math.max(0,root.indexFor(model,"id",selection));onActivated:installerDialog.choose(modelData.kind,model[currentIndex].id)}
+                                Select{id:loaderChoice;objectName:"componentSelect_"+modelData.kind;Layout.preferredWidth:Math.min(295,installerDialog.width*.36);model:[{id:"",label:root.t("不安装")}].concat(modelData.choices);textRole:"label";enabled:compatible&&!modelData.loading&&modelData.choices.length>0;currentIndex:0;Binding{target:loaderChoice;property:"currentIndex";value:Math.max(0,root.indexFor(loaderChoice.model,"id",selection));restoreMode:Binding.RestoreBindingOrValue}onActivated:installerDialog.choose(modelData.kind,model[currentIndex].id)}
                             }
                         }
                     }
                 }
             }
+            AButton{objectName:"clearLoaderButton";text:root.t("取消加载器选择");visible:installerDialog.primaryLoader!=="vanilla";onClicked:{installerDialog.primaryLoader="vanilla";installerDialog.selectedVersion="";installerDialog.apiSelections=({})}}
             LabelText{objectName:"installerSummary";text:"Minecraft "+backend.installer.minecraft+"  +  "+(installerDialog.primaryLoader==="vanilla"?root.t("原版"):installerDialog.primaryLoader+" "+installerDialog.selectedVersion);Layout.fillWidth:true;font.bold:true}
             RowLayout{Layout.fillWidth:true
                 AButton{text:root.t("刷新组件列表");onClicked:backend.prepareInstaller(backend.installer.minecraft)}
@@ -548,6 +564,58 @@ ApplicationWindow {
             }
         }
     }
+    Dialog{
+        id:setupWizard;objectName:"setupWizard";title:root.t("欢迎使用 AuroraLauncher");anchors.centerIn:Overlay.overlay
+        width:Math.min(760,root.width-64);height:Math.min(570,root.height-60);modal:true;closePolicy:Popup.NoAutoClose
+        property int step:0
+        background:Rectangle{color:root.panel;radius:24;border.color:root.line}
+        contentItem:ColumnLayout{
+            spacing:20
+            RowLayout{Layout.fillWidth:true
+                Image{source:assetBase+"/icon.png";Layout.preferredWidth:48;Layout.preferredHeight:48}
+                ColumnLayout{Layout.fillWidth:true;LabelText{text:root.t("让这里成为你的冒险起点");font.pixelSize:23;font.bold:true}MutedText{text:root.t("语言、外观与账号，随时都能在设置里修改。");Layout.fillWidth:true}}
+                MutedText{text:(setupWizard.step+1)+" / 3"}
+            }
+            Rectangle{Layout.fillWidth:true;height:4;radius:2;color:root.panel2;Rectangle{width:parent.width*(setupWizard.step+1)/3;height:4;radius:2;color:root.accent;Behavior on width{NumberAnimation{duration:150}}}}
+            ColumnLayout{visible:setupWizard.step===0;Layout.fillWidth:true;Layout.fillHeight:true;spacing:16
+                LabelText{text:root.t("选择界面语言");font.pixelSize:22;font.bold:true}
+                Repeater{model:[{id:"zh_CN",name:"简体中文"},{id:"en_US",name:"English"},{id:"ja_JP",name:"日本語"},{id:"ko_KR",name:"한국어"}]
+                    AButton{required property var modelData;objectName:"setupLanguage_"+modelData.id;text:modelData.name;Layout.fillWidth:true;primary:cfg.language===modelData.id;onClicked:backend.setSetting("language",modelData.id)}
+                }
+                Item{Layout.fillHeight:true}
+            }
+            ColumnLayout{visible:setupWizard.step===1;Layout.fillWidth:true;Layout.fillHeight:true;spacing:18
+                LabelText{text:root.t("选择你喜欢的外观");font.pixelSize:22;font.bold:true}
+                RowLayout{Layout.fillWidth:true;spacing:18
+                    Repeater{model:[{key:"dark",name:root.t("深色"),bg:"#0c1823",fg:"#e6f4f5"},{key:"light",name:root.t("浅色"),bg:"#edf4f6",fg:"#172e38"}]
+                        Rectangle{required property var modelData;Layout.fillWidth:true;height:132;radius:18;color:modelData.bg;border.width:2;border.color:cfg.theme===modelData.key?root.accent:root.line
+                            Rectangle{anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:16;height:15;radius:5;color:"#38cbbd";opacity:.6}
+                            Text{anchors.centerIn:parent;text:modelData.name;color:modelData.fg;font.pixelSize:20;font.family:appFont}
+                            MouseArea{anchors.fill:parent;onClicked:backend.setSetting("theme",modelData.key)}
+                        }
+                    }
+                }
+                RowLayout{LabelText{text:root.t("优先节省性能");Layout.fillWidth:true}Switch{checked:cfg.performanceMode==="balanced";onToggled:backend.setSetting("performanceMode",checked?"balanced":"smooth")}}
+                MutedText{text:root.t("平衡模式降低光幕绘制开销；窗口在后台时暂停主页动画。");Layout.fillWidth:true}
+                Item{Layout.fillHeight:true}
+            }
+            ColumnLayout{visible:setupWizard.step===2;Layout.fillWidth:true;Layout.fillHeight:true;spacing:18
+                LabelText{text:root.t("配置你的玩家账号");font.pixelSize:22;font.bold:true}
+                MutedText{text:root.t("登录微软账号，自动同步玩家皮肤和已启用的披风。也可以稍后添加。");Layout.fillWidth:true}
+                AButton{objectName:"setupMicrosoft";text:root.t("微软账号登录");primary:true;Layout.fillWidth:true;enabled:!run.busy;onClicked:backend.microsoftLogin()}
+                RowLayout{Field{id:setupOfflineName;Layout.fillWidth:true;placeholderText:root.t("离线玩家名称")}AButton{text:root.t("添加离线账号");enabled:setupOfflineName.text.trim().length>0;onClicked:{backend.addOffline(setupOfflineName.text);setupOfflineName.clear()}}}
+                LabelText{text:backend.accountList.length?root.t("当前账号：")+backend.currentAccountName:root.t("可以跳过，稍后在账号管理中配置。");Layout.fillWidth:true}
+                Item{Layout.fillHeight:true}
+            }
+            RowLayout{Layout.fillWidth:true
+                AButton{objectName:"setupSkip";text:root.t("跳过配置");onClicked:{backend.finishSetup();setupWizard.close()}}
+                Item{Layout.fillWidth:true}
+                AButton{text:root.t("上一步");visible:setupWizard.step>0;onClicked:setupWizard.step--}
+                AButton{objectName:"setupNext";text:setupWizard.step===2?root.t("开始使用"):root.t("下一步");primary:true;onClicked:{if(setupWizard.step<2)setupWizard.step++;else{backend.finishSetup();setupWizard.close()}}}
+            }
+        }
+    }
+
     Dialog{id:infoDialog;objectName:"infoDialog";anchors.centerIn:Overlay.overlay;width:Math.min(root.width-100,600);modal:true;standardButtons:Dialog.NoButton;footer:DialogButtonBox{AButton{text:root.t("确定");onClicked:infoDialog.close()}} contentItem:ScrollView{implicitHeight:Math.min(infoText.implicitHeight+10,350);TextArea{id:infoText;width:parent.width;readOnly:true;selectByMouse:true;wrapMode:TextEdit.Wrap;font.family:appFont;color:root.ink;background:null}}background:Rectangle{color:root.panel;radius:22;border.color:root.line}}
     Dialog{id:loginDialog;objectName:"loginDialog";title:root.t("微软账号登录");anchors.centerIn:Overlay.overlay;width:Math.min(540,root.width-48);modal:true;closePolicy:Popup.NoAutoClose;standardButtons:Dialog.NoButton;footer:DialogButtonBox{AButton{text:root.t("取消");onClicked:{backend.cancelTask();loginDialog.close()}}} onRejected:{backend.cancelTask();close()}background:Rectangle{color:root.panel;radius:22;border.color:root.line}
         contentItem:ColumnLayout{spacing:16;LabelText{text:root.t("在微软网页输入以下设备码，完成账号授权。");Layout.fillWidth:true}Text{text:run.authCode;font.family:appFont;font.pixelSize:38;font.bold:true;color:root.accent;Layout.alignment:Qt.AlignHCenter}RowLayout{Layout.alignment:Qt.AlignHCenter;AButton{text:root.t("复制设备码");onClicked:backend.copyText(run.authCode)}AButton{objectName:"openMicrosoftLoginButton";text:root.t("打开微软登录网页");primary:true;onClicked:backend.openLoginPage()}}MutedText{text:root.t("请在浏览器登录；设备码过期后可重新获取。");Layout.fillWidth:true}}

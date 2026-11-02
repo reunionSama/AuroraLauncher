@@ -1,0 +1,31 @@
+{
+  "commit": "e6e9abebbe29af065c555d432c48a3779e435891",
+  "repository": "ZalithLauncher/ZalithLauncher2",
+  "icons": [
+    {
+      "name": "forge",
+      "path": "ZalithLauncher/src/main/res/drawable/img_anvil.png",
+      "blob": "4f15ae22ea7396409d4130df8b8c9ba817f4d888"
+    },
+    {
+      "name": "fabric",
+      "path": "ZalithLauncher/src/main/res/drawable/img_loader_fabric.webp",
+      "blob": "1e1bb37e1c71f27fc5651efb0b13b8dc40d53c06"
+    },
+    {
+      "name": "neoforge",
+      "path": "ZalithLauncher/src/main/res/drawable/img_loader_neoforge.png",
+      "blob": "12319e920626c35f75fc87008643cdaed9e74ef7"
+    },
+    {
+      "name": "optifine",
+      "path": "ZalithLauncher/src/main/res/drawable/img_loader_optifine.png",
+      "blob": "2aefbc7ef040ee60c0c7af52a96ef3973177c52b"
+    },
+    {
+      "name": "quilt",
+      "path": "ZalithLauncher/src/main/res/drawable/img_loader_quilt.webp",
+      "blob": "0e9abc098287b949ebdb55197c288626cde87bf1"
+    }
+  ]
+}

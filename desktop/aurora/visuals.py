@@ -45,18 +45,23 @@ def rotate(v,r):
 class AnimatedPaint(QQuickPaintedItem):
     changed=Signal()
     def __init__(self,parent=None):
-        super().__init__(parent);self.setAntialiasing(True);self._active=True;self._fps=60;self._frames=0;self._last=time.monotonic();self._time=0.
-        self.timer=QTimer(self);self.timer.setTimerType(Qt.TimerType.PreciseTimer);self.timer.timeout.connect(self.tick);self.timer.start(16)
+        super().__init__(parent);self.setAntialiasing(True);self._active=True;self._fps=30;self._frames=0;self._last=time.monotonic();self._time=0.
+        self.timer=QTimer(self);self.timer.setTimerType(Qt.TimerType.PreciseTimer);self.timer.timeout.connect(self.tick);self.timer.start(33)
     def tick(self):
         now=time.monotonic();delta=min(.1,now-self._last);self._last=now
         if self._active:self._time+=delta;self._frames+=1;self.update()
     def setActive(self,v):
-        self._active=bool(v);self._last=time.monotonic()
+        v=bool(v)
+        if v==self._active:return
+        self._active=v;self._last=time.monotonic()
         if v:self.timer.start(max(16,int(1000/self._fps)))
         else:self.timer.stop()
         self.changed.emit()
     renderActive=Property(bool,lambda self:self._active,setActive,notify=changed)
-    def setFps(self,v):self._fps=max(15,min(60,int(v)));self.timer.setInterval(round(1000/self._fps));self.changed.emit()
+    def setFps(self,v):
+        value=max(15,min(60,int(v)))
+        if value==self._fps:return
+        self._fps=value;self.timer.setInterval(round(1000/self._fps));self.changed.emit()
     fps=Property(int,lambda self:self._fps,setFps,notify=changed)
     frameCount=Property(int,lambda self:self._frames,notify=changed)
 
@@ -88,7 +93,7 @@ class AuroraView(AnimatedPaint):
     def paint(self,target):
         w,h=self.width(),self.height()
         if min(w,h)<1:return
-        rw=max(1,min(800,round(w*.6)));rh=max(1,round(h*rw/w))
+        rw=max(1,min(640 if self._fps>=60 else 480,round(w*.5)));rh=max(1,round(h*rw/w))
         if not hasattr(self,'_frame') or self._frame.width()!=rw or self._frame.height()!=rh:
             self._frame=QImage(rw,rh,QImage.Format.Format_ARGB32_Premultiplied)
         painter=QPainter(self._frame)
@@ -99,10 +104,10 @@ class AuroraView(AnimatedPaint):
         t=self._phase
         bg=QLinearGradient(0,0,0,h);bg.setColorAt(0,QColor('#030c1b'));bg.setColorAt(.65,QColor('#092635'));bg.setColorAt(1,QColor('#091b27'));p.fillRect(QRectF(0,0,w,h),bg)
         p.setPen(QColor('#c6e4f2'))
-        for i in range(110):
+        for i in range(64):
             p.setOpacity(.2+.4*(.5+.5*math.sin(t+i)));p.drawPoint(QPointF((i*7919%1000)/1000*w,(i*3571%1000)/1500*h))
         p.setCompositionMode(QPainter.CompositionMode.CompositionMode_Plus)
-        n=96 if self._fps>=60 else 64;column=w/n*3
+        n=80 if self._fps>=60 else 48;column=w/n*3
         for layer,img in enumerate(self._brushes):
             for i in range(n):
                 u=i/n;fold=math.sin(u*8+t*.55+layer)+.35*math.sin(u*21-t*.3+layer*2)
@@ -116,6 +121,7 @@ class AuroraView(AnimatedPaint):
             self._mountain.lineTo(w,h);self._mountain.closeSubpath()
         p.fillPath(self._mountain,QColor('#050e19'))
 
+@__import__('functools').lru_cache(maxsize=2)
 def player_boxes(model):
     arm=3 if model=='slim' else 4;shoulder=4+arm/2
     base=[('head',(8,8,8),(0,24,0),(0,4,0),(0,0)),('body',(8,12,4),(0,24,0),(0,-6,0),(16,16)),
@@ -136,7 +142,10 @@ class PlayerView(AnimatedPaint):
     def tick(self):
         old=self._time;super().tick();self._yaw+=(self._targetYaw-self._yaw)*(1-math.exp(-24*(self._time-old)))
         if self._active and self._actions and self._time>=self._nextAction:self.triggerAction();self._nextAction=self._time+self._interval
-    def setYaw(self,v):self._targetYaw=float(v);self.update();self.changed.emit()
+    def setYaw(self,v):
+        self._targetYaw=float(v)
+        if not self._active:self._yaw=self._targetYaw
+        self.update();self.changed.emit()
     yawAngle=Property(float,lambda self:self._targetYaw,setYaw,notify=AnimatedPaint.changed)
     def setModel(self,value):self._model='slim' if value=='slim' else 'classic';self.update();self.changed.emit()
     skinModel=Property(str,lambda self:self._model,setModel,notify=AnimatedPaint.changed)
@@ -169,7 +178,7 @@ class PlayerView(AnimatedPaint):
         idle=math.sin(t*1.5)*.025;pose['leftArm'][2]+=idle;pose['rightArm'][2]-=idle
         scale=min(w/23,h/37);center=w*.5;base=h*.94
         shadow=QRadialGradient(center,base-4,scale*9);shadow.setColorAt(0,QColor(0,0,0,70));shadow.setColorAt(1,QColor(0,0,0,0));p.setPen(QColor(0,0,0,0));p.setBrush(shadow);p.drawEllipse(QRectF(center-scale*9,base-scale*2,scale*18,scale*4))
-        boxes=player_boxes(self._model)
+        boxes=list(player_boxes(self._model))
         if not self._cape.isNull():
             boxes.append(('cape',(10,16,1),(0,24,-2.6),(0,-8,-.75),(0,0),(10,16,1),True))
             pose['cape']=[.12+max(0,-pose['body'][0])*.5+math.sin(t*2.1)*.035,0,math.sin(t*1.4)*.02]
@@ -178,6 +187,8 @@ class PlayerView(AnimatedPaint):
             bw,bh,bd=dims;x,y,z=-bw/2,-bh/2,-bd/2;X,Y,Z=bw/2,bh/2,bd/2
             verts=[[(x,Y,Z),(X,Y,Z),(X,y,Z),(x,y,Z)],[(X,Y,z),(x,Y,z),(x,y,z),(X,y,z)],[(x,Y,z),(x,Y,Z),(x,y,Z),(x,y,z)],[(X,Y,Z),(X,Y,z),(X,y,z),(X,y,Z)],[(x,Y,z),(X,Y,z),(X,Y,Z),(x,Y,Z)],[(x,y,Z),(X,y,Z),(X,y,z),(x,y,z)]]
             u,v=uv;tw,th,td=texture_dims;uvs=[(u+td,v+td,tw,th),(u+td+tw+td,v+td,tw,th),(u,v+td,td,th),(u+td+tw,v+td,td,th),(u+td,v,tw,td),(u+td+tw,v,tw,td)]
+            if name=='cape':
+                uvs[0],uvs[1]=uvs[1],uvs[0]
             for face,(points,rect) in enumerate(zip(verts,uvs)):
                 world=[]
                 for vertex in points:

@@ -13,5 +13,8 @@ a=Analysis([str(root/'main.py')],pathex=[str(root)],binaries=[],datas=datas,
 unused=('/qml/QtQuick3D/','/qml/Qt3D/','/qml/QtWebEngine/','/qml/QtWebView/','/qml/QtMultimedia/','/qml/QtCharts/','/qml/QtGraphs/','/qml/QtLocation/','/qml/QtVirtualKeyboard/')
 a.datas=[x for x in a.datas if not any(v in '/'+x[0].replace('\\','/')+'/' for v in unused)]
 a.binaries=[x for x in a.binaries if not any(v in '/'+x[0].replace('\\','/')+'/' for v in unused)]
+# Native Windows font fallback avoids the large custom font at runtime.
+a.datas=[x for x in a.datas if not x[0].lower().endswith('.otf')]
 pyz=PYZ(a.pure)
-exe=EXE(pyz,a.scripts,a.binaries,a.datas,[],name='AuroraLauncher',debug=False,bootloader_ignore_signals=False,strip=False,upx=False,console=False,icon=str(root/'assets/icon.ico'),version=str(root/'version_info.txt'),uac_admin=False)
+exe=EXE(pyz,a.scripts,[],exclude_binaries=True,name='AuroraLauncher',debug=False,bootloader_ignore_signals=False,strip=False,upx=False,console=False,icon=str(root/'assets/icon.ico'),version=str(root/'version_info.txt'),uac_admin=False)
+coll=COLLECT(exe,a.binaries,a.datas,strip=False,upx=False,name='AuroraLauncher')

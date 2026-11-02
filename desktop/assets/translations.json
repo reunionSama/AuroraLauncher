@@ -950,9 +950,9 @@
     "ko_KR": "설치 시작"
   },
   "微软账号登录": {
-    "en_US": "Microsoft account sign-in",
-    "ja_JP": "Microsoft アカウントにサインイン",
-    "ko_KR": "Microsoft 계정 로그인"
+    "en_US": "Sign in with Microsoft",
+    "ja_JP": "Microsoft でログイン",
+    "ko_KR": "Microsoft 로그인"
   },
   "在微软网页输入以下设备码，完成账号授权。": {
     "en_US": "Enter this device code on Microsoft's website to authorize your account.",
@@ -1223,5 +1223,135 @@
     "en_US": "Automatic update check",
     "ja_JP": "自動更新チェック",
     "ko_KR": "자동 업데이트 확인"
+  },
+  "与当前加载器不兼容，请先取消当前选择": {
+    "en_US": "Incompatible with the selected loader. Clear the selection first.",
+    "ja_JP": "選択中のローダーとは互換性がありません。先に選択を解除してください。",
+    "ko_KR": "선택한 로더와 호환되지 않습니다. 먼저 선택을 해제하세요."
+  },
+  "取消加载器选择": {
+    "en_US": "Clear loader selection",
+    "ja_JP": "ローダーの選択を解除",
+    "ko_KR": "로더 선택 해제"
+  },
+  "重新打开首次配置": {
+    "en_US": "Open welcome setup",
+    "ja_JP": "初回設定を開く",
+    "ko_KR": "초기 설정 열기"
+  },
+  "优先节省性能": {
+    "en_US": "Prefer lower resource usage",
+    "ja_JP": "リソース使用量を抑える",
+    "ko_KR": "리소스 절약 우선"
+  },
+  "Modrinth 备用接口（可选）": {
+    "en_US": "Modrinth alternate API (optional)",
+    "ja_JP": "Modrinth 代替 API（任意）",
+    "ko_KR": "Modrinth 대체 API (선택)"
+  },
+  "留空使用官方接口；仅填写你信任的 HTTPS 服务，下载文件仍校验哈希。": {
+    "en_US": "Leave blank for the official API. Only enter a trusted HTTPS service. Downloads are hash-verified.",
+    "ja_JP": "空欄で公式 API を使用します。信頼できる HTTPS サービスのみを指定してください。ダウンロードはハッシュを検証します。",
+    "ko_KR": "비워 두면 공식 API를 사용합니다. 신뢰하는 HTTPS 서비스만 입력하세요. 다운로드의 해시를 검증합니다."
+  },
+  "欢迎使用 AuroraLauncher": {
+    "en_US": "Welcome to AuroraLauncher",
+    "ja_JP": "AuroraLauncher へようこそ",
+    "ko_KR": "AuroraLauncher에 오신 것을 환영합니다"
+  },
+  "让这里成为你的冒险起点": {
+    "en_US": "Your next adventure starts here",
+    "ja_JP": "ここから冒険を始めよう",
+    "ko_KR": "여기서 새로운 모험을 시작하세요"
+  },
+  "语言、外观与账号，随时都能在设置里修改。": {
+    "en_US": "Language, appearance and accounts can be changed later in Settings.",
+    "ja_JP": "言語、外観、アカウントは設定でいつでも変更できます。",
+    "ko_KR": "언어, 테마와 계정은 나중에 설정에서 변경할 수 있습니다."
+  },
+  "选择界面语言": {
+    "en_US": "Choose your language",
+    "ja_JP": "表示言語を選択",
+    "ko_KR": "표시 언어 선택"
+  },
+  "选择你喜欢的外观": {
+    "en_US": "Make it yours",
+    "ja_JP": "お好みの外観を選択",
+    "ko_KR": "원하는 테마 선택"
+  },
+  "深色": {
+    "en_US": "Dark",
+    "ja_JP": "ダーク",
+    "ko_KR": "다크"
+  },
+  "浅色": {
+    "en_US": "Light",
+    "ja_JP": "ライト",
+    "ko_KR": "라이트"
+  },
+  "平衡模式降低光幕绘制开销；窗口在后台时暂停主页动画。": {
+    "en_US": "Balanced mode reduces aurora rendering cost. Home animations pause in the background.",
+    "ja_JP": "バランスモードはオーロラ描画の負荷を抑えます。バックグラウンドではホーム画面のアニメーションを停止します。",
+    "ko_KR": "균형 모드는 오로라 렌더링 부하를 줄입니다. 백그라운드에서 홈 애니메이션을 일시 정지합니다."
+  },
+  "配置你的玩家账号": {
+    "en_US": "Set up your player account",
+    "ja_JP": "プレイヤーアカウントを設定",
+    "ko_KR": "플레이어 계정 설정"
+  },
+  "登录微软账号，自动同步玩家皮肤和已启用的披风。也可以稍后添加。": {
+    "en_US": "Sign in with Microsoft to sync your skin and active cape, or add an account later.",
+    "ja_JP": "Microsoft にログインするとスキンと使用中のマントを同期します。後で追加することもできます。",
+    "ko_KR": "Microsoft 계정으로 로그인하면 스킨과 사용 중인 망토를 동기화합니다. 나중에 추가해도 됩니다."
+  },
+  "离线玩家名称": {
+    "en_US": "Offline player name",
+    "ja_JP": "オフラインのプレイヤー名",
+    "ko_KR": "오프라인 플레이어 이름"
+  },
+  "当前账号：": {
+    "en_US": "Current account: ",
+    "ja_JP": "現在のアカウント：",
+    "ko_KR": "현재 계정: "
+  },
+  "可以跳过，稍后在账号管理中配置。": {
+    "en_US": "You can skip this and add accounts later.",
+    "ja_JP": "スキップして後でアカウントを追加できます。",
+    "ko_KR": "건너뛴 후 나중에 계정을 추가할 수 있습니다."
+  },
+  "跳过配置": {
+    "en_US": "Skip setup",
+    "ja_JP": "設定をスキップ",
+    "ko_KR": "설정 건너뛰기"
+  },
+  "上一步": {
+    "en_US": "Back",
+    "ja_JP": "戻る",
+    "ko_KR": "이전"
+  },
+  "开始使用": {
+    "en_US": "Get started",
+    "ja_JP": "使い始める",
+    "ko_KR": "시작하기"
+  },
+  "下一步": {
+    "en_US": "Next",
+    "ja_JP": "次へ",
+    "ko_KR": "다음"
+  },
+  "正在搜索…": {
+    "en_US": "Searching…",
+    "ja_JP": "検索中…",
+    "ko_KR": "검색 중…"
+  },
+  "网络暂时不可用，显示上次缓存；安装时仍需联网校验。": {
+    "en_US": "Network unavailable. Showing cached results; installation still requires an online check.",
+    "ja_JP": "ネットワークに接続できません。キャッシュを表示します。インストール時にはオンライン検証が必要です。",
+    "ko_KR": "네트워크에 연결할 수 없어 캐시를 표시합니다. 설치에는 온라인 검증이 필요합니다."
+  },
+  "已连接备用资源接口": {
+    "en_US": "Connected to the alternate resource API",
+    "ja_JP": "代替リソース API に接続しました",
+    "ko_KR": "대체 리소스 API에 연결했습니다"
   }
 }

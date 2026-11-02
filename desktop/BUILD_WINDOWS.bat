@@ -13,9 +13,13 @@ if errorlevel 1 goto fail
 if errorlevel 1 goto fail
 .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean AuroraLauncher.spec
 if errorlevel 1 goto fail
-"dist\AuroraLauncher.exe" --self-test --data-dir "%TEMP%\AuroraLauncher-build-test" --test-report "%CD%\windows-ui-report.json" --screenshot-dir "%CD%\windows-ui-screens"
+"dist\AuroraLauncher\AuroraLauncher.exe" --self-test --data-dir "%TEMP%\AuroraLauncher-build-test" --test-report "%CD%\windows-ui-report.json" --screenshot-dir "%CD%\windows-ui-screens"
 if errorlevel 1 goto fail
-echo Built and startup-tested: dist\AuroraLauncher.exe
+ .venv\Scripts\python.exe make_installer_art.py
+if errorlevel 1 goto fail
+"%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" installer.iss
+if errorlevel 1 goto fail
+echo Built and startup-tested: dist\AuroraLauncher-Setup.exe
 pause
 exit /b 0
 :fail

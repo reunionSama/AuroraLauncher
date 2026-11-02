@@ -92,3 +92,14 @@ AzureLauncher (D3sp1r4t) has no license; no code or art from it is redistributed
 Data defaults to `%LOCALAPPDATA%/AuroraLauncher/Desktop6`. Previous desktop data is
 not deleted. An existing `.minecraft` library can be selected through settings.
 
+
+
+## Desktop 6.2.0
+
+Windows distribution is now `AuroraLauncher-Setup.exe`, a per-user Inno Setup installer. It installs an ordinary folder-based Qt/Python application, avoiding one-file extraction on each launch. Settings and game data remain under the existing Desktop6 data directory; uninstall removes program files, not player data. The portable alternative is a ZIP containing the whole application folder; the nested EXE must stay with its `_internal` directory.
+
+This update adds optional language/theme/account onboarding, loader exclusion with explicit reset, corrected cape face UVs, real loader icons, cached asynchronous Modrinth thumbnails, retry/cooldown and labelled stale search results, and an optional user-configured HTTPS Modrinth v2 endpoint. Download hashes are still validated. The official API remains the default; a custom endpoint is opt-in and receives no Microsoft credentials. No arbitrary public proxy is silently used.
+
+Balanced rendering is the default. Home animations pause when unfocused/minimized, invisible aurora rendering stops, idle log/room polling stops, the remote Minecraft catalog loads on demand, the log ring is bounded, and Windows uses installed fonts. Resource measurements are collected against the shipped 6.1.0 EXE on the same Windows worker. Those figures are CI measurements, not a guarantee for every PC.
+
+Signing is optional only because a publisher credential may not exist. The build uses `AURORA_SIGNING_PFX_BASE64` and `AURORA_SIGNING_PFX_PASSWORD` repository secrets if configured, rejects untrusted or non-code-signing certificates, timestamps the launcher and setup, and records actual Authenticode status. A build without credentials is explicitly unsigned. Do not import a self-signed certificate into users' trust stores, disable Windows protection, or promise that signing eliminates SmartScreen/Defender warnings. Public production certificates commonly require a hardware/cloud signing service; adapt the signing stage to that service when obtained.

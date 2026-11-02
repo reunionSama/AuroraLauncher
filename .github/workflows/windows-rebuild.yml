@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: aurora-windows-desktop
   cancel-in-progress: true
@@ -51,11 +52,16 @@ jobs:
         run: python tests/terracotta_smoke.py "$env:RUNNER_TEMP\aurora-terra-test" ../evidence/terracotta.json
       - name: Verify real Fabric, Quilt, Forge, OptiFine, NeoForge and Fabric API installation
         run: python tests/installers_smoke.py "$env:RUNNER_TEMP\aurora-game-test" ../evidence/installers.json
-      - name: Build single Windows executable
+      - name: Build installed Windows application
         run: python -m PyInstaller --noconfirm --clean AuroraLauncher.spec
+      - name: Sign launcher when a trusted publisher certificate is configured
+        env:
+          AURORA_SIGNING_PFX_BASE64: ${{ secrets.AURORA_SIGNING_PFX_BASE64 }}
+          AURORA_SIGNING_PFX_PASSWORD: ${{ secrets.AURORA_SIGNING_PFX_PASSWORD }}
+        run: ./sign_windows.ps1 -Target dist/AuroraLauncher/AuroraLauncher.exe
       - name: Run the actual packaged EXE and exercise every page
         run: |
-          $p = Start-Process -FilePath dist/AuroraLauncher.exe -ArgumentList @('--self-test','--data-dir',"$env:RUNNER_TEMP\aurora-exe-test",'--test-report',"$pwd\..\evidence\exe-ui.json",'--screenshot-dir',"$pwd\..\evidence\exe-screens") -Wait -PassThru
+          $p = Start-Process -FilePath dist/AuroraLauncher/AuroraLauncher.exe -ArgumentList @('--self-test','--data-dir',"$env:RUNNER_TEMP\aurora-exe-test",'--test-report',"$pwd\..\evidence\exe-ui.json",'--screenshot-dir',"$pwd\..\evidence\exe-screens") -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "EXE smoke failed: $($p.ExitCode)" }
           $r = Get-Content ../evidence/exe-ui.json | ConvertFrom-Json
           if (-not $r.ok -or -not $r.frozen) { throw 'Packaged executable did not pass UI validation' }
@@ -72,16 +78,59 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE: 'true'
           ALSOFT_DRIVERS: 'null'
         run: |
-          $p = Start-Process -FilePath dist/AuroraLauncher.exe -ArgumentList @('--game-smoke','--game-version','1.20.1','--data-dir',"$env:RUNNER_TEMP\aurora-game-test",'--test-report',"$pwd\..\evidence\minecraft-demo.json",'--screenshot-dir',"$pwd\..\evidence\game-screens") -Wait -PassThru
+          $p = Start-Process -FilePath dist/AuroraLauncher/AuroraLauncher.exe -ArgumentList @('--game-smoke','--game-version','1.20.1','--data-dir',"$env:RUNNER_TEMP\aurora-game-test",'--test-report',"$pwd\..\evidence\minecraft-demo.json",'--screenshot-dir',"$pwd\..\evidence\game-screens") -Wait -PassThru
           Copy-Item "$env:RUNNER_TEMP\aurora-game-test\logs\launcher-latest.log" ../evidence/minecraft-launch.log -ErrorAction SilentlyContinue
           if ($p.ExitCode -ne 0) { throw "Minecraft demo smoke failed: $($p.ExitCode)" }
           $r = Get-Content ../evidence/minecraft-demo.json | ConvertFrom-Json
           if (-not $r.ok -or -not $r.game_window -or -not $r.renderer_initialized) { throw 'A real Minecraft window was not verified' }
+      - name: Create native Windows installer
+        run: |
+          python make_installer_art.py
+          $compiler = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $compiler)) { throw 'Inno Setup 6 is missing from the Windows build image' }
+          & $compiler installer.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
+      - name: Sign setup when a trusted publisher certificate is configured
+        env:
+          AURORA_SIGNING_PFX_BASE64: ${{ secrets.AURORA_SIGNING_PFX_BASE64 }}
+          AURORA_SIGNING_PFX_PASSWORD: ${{ secrets.AURORA_SIGNING_PFX_PASSWORD }}
+        run: ./sign_windows.ps1 -Target dist/AuroraLauncher-Setup.exe
+      - name: Install, run installed application, and uninstall in a temporary directory
+        run: python tests/installer_smoke.py dist/AuroraLauncher-Setup.exe ../evidence
+      - name: Retrieve previous shipped EXE for same-machine comparison
+        uses: actions/download-artifact@v4
+        with:
+          name: AuroraLauncher-Windows-tested
+          run-id: 41026525241
+          github-token: ${{ github.token }}
+          path: baseline
+      - name: Measure startup, foreground and background resources against 6.1.0
+        run: python tests/windows_performance.py ../baseline/AuroraLauncher.exe dist/AuroraLauncher/AuroraLauncher.exe ../evidence/performance.json
+      - name: Inspect Authenticode status and available Defender protection
+        run: |
+          $files = @('dist/AuroraLauncher/AuroraLauncher.exe','dist/AuroraLauncher-Setup.exe')
+          $signatures = @($files | ForEach-Object { $sig = Get-AuthenticodeSignature $_; @{ file = $_; status = [string]$sig.Status; publisher = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { $null } } })
+          $signatures | ConvertTo-Json -Depth 4 | Out-File ../evidence/signatures.json -Encoding utf8
+          try {
+            $status = Get-MpComputerStatus -ErrorAction Stop
+            if ($status.AntivirusEnabled) {
+              Start-MpScan -ScanType CustomScan -ScanPath "$pwd\dist" -ErrorAction Stop
+              $detections = @(Get-MpThreatDetection -ErrorAction Stop | Where-Object { $_.Resources -match 'AuroraLauncher' })
+              @{available=$true; scan_completed=$true; detections=$detections.Count} | ConvertTo-Json | Out-File ../evidence/defender.json -Encoding utf8
+              if ($detections.Count -gt 0) { throw 'Defender reported a detection in the build output' }
+            } else {
+              @{available=$false; scan_completed=$false; reason='Defender is not enabled on this CI image'} | ConvertTo-Json | Out-File ../evidence/defender.json -Encoding utf8
+            }
+          } catch {
+            if (Test-Path ../evidence/defender.json) { throw }
+            @{available=$false; scan_completed=$false; reason=$_.Exception.Message} | ConvertTo-Json | Out-File ../evidence/defender.json -Encoding utf8
+          }
       - name: Collect executable and corresponding source
         run: |
           New-Item -ItemType Directory -Force ../deliverables | Out-Null
-          Copy-Item dist/AuroraLauncher.exe ../deliverables/AuroraLauncher.exe
-          Get-FileHash ../deliverables/AuroraLauncher.exe -Algorithm SHA256 | Format-List | Out-File ../deliverables/SHA256.txt -Encoding utf8
+          Copy-Item dist/AuroraLauncher-Setup.exe ../deliverables/AuroraLauncher-Setup.exe
+          Compress-Archive -Path dist/AuroraLauncher -DestinationPath ../deliverables/AuroraLauncher-Portable.zip
+          Get-FileHash ../deliverables/AuroraLauncher-Setup.exe -Algorithm SHA256 | Format-List | Out-File ../deliverables/SHA256.txt -Encoding utf8
           Copy-Item ../LICENSE ../deliverables/LICENSE.txt
           Copy-Item assets/THIRD_PARTY_NOTICES.txt ../deliverables/THIRD_PARTY_NOTICES.txt
           git rev-parse HEAD | Out-File ../deliverables/SOURCE_COMMIT.txt -Encoding utf8
@@ -106,7 +155,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AuroraLauncher-Windows-diagnostic-EXE
-          path: desktop/dist/AuroraLauncher.exe
+          path: desktop/dist/
           if-no-files-found: warn
           retention-days: 7
       - name: Upload corresponding source

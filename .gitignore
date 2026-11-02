@@ -11,3 +11,8 @@ desktop/assets/*.otf
 desktop/assets/*.png
 desktop/assets/*.ico
 AuroraLauncher-Desktop-source.zip
+
+desktop/assets/loaders/
+desktop/assets/*.jar
+desktop/assets/*.bmp
+baseline/

@@ -11,6 +11,7 @@ from urllib.parse import urlencode,quote
 from xml.etree import ElementTree
 from .storage import load_json,atomic_json
 from .network import Cancelled
+from .modrinth_net import ModrinthAPI
 
 COMPONENTS=[('optifine','OptiFine'),('forge','Forge'),('neoforge','NeoForge'),('fabric','Fabric'),('fabric-api','Fabric API'),('quilt','Quilt'),('quilt-api','Quilted Fabric API')]
 PRIMARY={'vanilla','fabric','forge','neoforge','quilt','optifine'}
@@ -19,6 +20,9 @@ def version_key(value):return tuple((0,int(v)) if v.isdigit() else (1,v) for v i
 
 def validate_plan(plan):
     version=plan.get('minecraft','');loader=plan.get('loader','vanilla');chosen=plan.get('loader_version','')
+    extras=[key for key in PRIMARY-{'vanilla'} if plan.get(key)]
+    if len(extras)>1 or (extras and extras[0]!=loader):raise ValueError('只能选择一个主加载器，不能混装 Fabric、Forge、NeoForge、Quilt 或 OptiFine')
+    if isinstance(loader,(list,dict,tuple)):raise ValueError('只能选择一个主加载器')
     if not re.fullmatch(r'[A-Za-z0-9_.+\-]+',version):raise ValueError('请选择有效的 Minecraft 版本')
     if loader not in PRIMARY:raise ValueError('加载器类型无效')
     if loader!='vanilla' and not chosen:raise ValueError('请选择加载器的具体版本')
@@ -71,7 +75,7 @@ class InstallerCatalog:
         if kind in ('fabric-api','quilt-api'):
             project='fabric-api' if kind=='fabric-api' else 'qsl';loader='fabric' if kind=='fabric-api' else 'quilt'
             query=urlencode({'game_versions':json.dumps([version]),'loaders':json.dumps([loader])})
-            values=self.net.json('https://api.modrinth.com/v2/project/'+project+'/version?'+query,ttl=1800)
+            values=ModrinthAPI(self.e).json('https://api.modrinth.com/v2/project/'+project+'/version?'+query,ttl=1800)
             return [{'id':v['id'],'label':v['version_number'],'stable':v.get('version_type')=='release','meta':v} for v in values]
         raise ValueError('未知组件')
     def install(self,plan):
@@ -85,7 +89,7 @@ class InstallerCatalog:
         try:
             for kind in ('fabric-api','quilt-api'):
                 if plan.get(kind):
-                    value=self.net.json('https://api.modrinth.com/v2/version/'+quote(plan[kind]),ttl=1800)
+                    value=ModrinthAPI(self.e).json('https://api.modrinth.com/v2/version/'+quote(plan[kind]),ttl=1800)
                     if version not in value.get('game_versions',[]) or loader not in value.get('loaders',[]):raise ValueError('所选 API 不兼容当前游戏和加载器')
                     Modrinth(self.e).install(value['project_id'],'mod',plan[kind])
         finally:self.e.store.settings['selectedVersion']=previous

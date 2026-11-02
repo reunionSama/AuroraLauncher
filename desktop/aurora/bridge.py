@@ -17,6 +17,7 @@ from .updates import UpdateChecker
 from .installers import InstallerCatalog,COMPONENTS,validate_plan
 from .i18n import translate,LANGUAGES
 from .mods import Modrinth
+from .images import IconCache
 from .terracotta import Terracotta
 
 class Bridge(QObject):
@@ -27,23 +28,26 @@ class Bridge(QObject):
     def __init__(self,store:Store,assets:Path,test_mode=False):
         super().__init__();self.store=store;self.assets=assets;self.test_mode=test_mode;self.pool=ThreadPoolExecutor(max_workers=5,thread_name_prefix='Aurora');self.catalog_pool=ThreadPoolExecutor(max_workers=4,thread_name_prefix='Aurora-catalog')
         self.cancel=threading.Event();self.engine=Engine(store,self._progress.emit,self._line.emit,self.cancel);self.terra=Terracotta(self.engine)
+        self.icons=IconCache(self.engine.net);self.icon_pool=ThreadPoolExecutor(max_workers=3,thread_name_prefix='Aurora-icons');self._foreground=True;self._closing=False
         self._catalog_generation=0;self._installer={'minecraft':'','rows':[]}
         self.updater=UpdateChecker(store.root/'cache')
         self._skin_cancel=threading.Event();self.skins=SkinCache(store.root/'cache',self._skin_cancel);self._skin_identity=None;self._skin_generation=0;self._skin_model='classic';self._skin_status='默认皮肤';self._cape=''
         self.vault=Vault(store.root);self.accounts=[];self._vault_error=''
         try:self.accounts=self.vault.read()
         except Exception:self._vault_error='账号数据无法解密，请重新登录微软账号。'
-        self._all=[];self._versions=[];self._local=[];self._results=[];self._files=[];self._diagnostics=[];self._java=[];self._worlds=[];self._updates=None;self._skin=str(assets/'aurora_skin.png');self._jobs={};self._tasks=[];self._log=deque(maxlen=1800);self._logdirty=False;self._filekind='mods';self._query='';self._snapshots=False;self._search_id=0;self._pending={};self._terra_index=-1;self._terra_session='';self._terra_failures=0
-        self._runtime={'busy':False,'status':'准备就绪','progress':0.0,'running':False,'pid':0,'authCode':'','authUrl':'','room':'','roomState':'未连接','roomAddress':'','roomMembers':[],'catalogLoading':False,'error':'','updateTitle':'','updateBody':''}
+        self._all=[];self._versions=[];self._local=[];self._results=[];self._files=[];self._diagnostics=[];self._java=[];self._worlds=[];self._updates=None;self._skin=str(assets/'aurora_skin.png');self._jobs={};self._tasks=[];self._log=deque(maxlen=900);self._logdirty=False;self._filekind='mods';self._query='';self._snapshots=False;self._search_id=0;self._pending={};self._terra_index=-1;self._terra_session='';self._terra_failures=0
+        self._runtime={'busy':False,'status':'准备就绪','progress':0.0,'running':False,'pid':0,'authCode':'','authUrl':'','room':'','roomState':'未连接','roomAddress':'','roomMembers':[],'catalogLoading':False,'error':'','updateTitle':'','updateBody':'','resourceStatus':''}
         self._done.connect(self._finish);self._progress.connect(self._on_progress);self._line.connect(self._append_log);self._exited.connect(self._game_exit);self._device.connect(self._on_device)
-        self.logtimer=QTimer(self);self.logtimer.timeout.connect(self._flush_logs);self.logtimer.start(150)
-        self.terratimer=QTimer(self);self.terratimer.timeout.connect(self._poll_terra);self.terratimer.start(1500)
+        self.logtimer=QTimer(self);self.logtimer.setSingleShot(True);self.logtimer.timeout.connect(self._flush_logs)
+        self.terratimer=QTimer(self);self.terratimer.timeout.connect(self._poll_terra)
+        self._pending_search=None;self._search_timer=QTimer(self);self._search_timer.setSingleShot(True);self._search_timer.timeout.connect(self._dispatch_search)
         self._save_timer=QTimer(self);self._save_timer.setSingleShot(True);self._save_timer.timeout.connect(self.store.save)
         self._logfile=(store.root/'logs'/'launcher-latest.log').open('a',encoding='utf-8',buffering=1)
         self._append_log('AuroraLauncher Desktop '+VERSION+' · 全新桌面移植')
         self.refresh()
         if not test_mode:
-            QTimer.singleShot(350,self.fetchVersions)
+            # The remote catalog is loaded when Versions is opened, not during startup.
+            pass
             if self.store.settings['autoUpdate']:QTimer.singleShot(1600,lambda:self.checkUpdate(False))
     @Property('QVariantMap',notify=settingsChanged)
     def settings(self):return dict(self.store.settings)
@@ -85,6 +89,8 @@ class Bridge(QObject):
     def version(self):return VERSION
     @Slot(str,result=str)
     def translate(self,text):return translate(text,self.store.settings.get('language','zh_CN'))
+    @Property(bool,constant=True)
+    def testing(self):return self.test_mode
     @Property(str,constant=True)
     def clientId(self):return CLIENT_ID
     @Property(str,notify=dataChanged)
@@ -108,12 +114,15 @@ class Bridge(QObject):
     @Slot(str,object,str)
     def _finish(self,key,value,error):
         busy=self._jobs.pop(key,False)
+        if key.startswith('search-') and self._pending_search:self._search_timer.start(0)
         if busy:
             self._set(busy=False,status='已取消' if self.cancel.is_set() else ('任务失败' if error else '已完成'),progress=0 if error else 1)
             for task in self._tasks:
                 if task['id']==key:task['status']='失败 / 已取消' if error else '已完成';task['progress']=0 if error else 1;break
             self.tasksChanged.emit();self.cancel.clear()
         if error:
+            if key.startswith('search-') and key!=f'search-{self._search_id}':return
+            if key.startswith('search-'):self._set(resourceStatus=error)
             if key.startswith('component-'):self._catalog_result(key,[],error)
             elif key=='versions':self._set(catalogLoading=False);self.message.emit('版本列表暂时不可用',error)
             elif key=='terra-poll':
@@ -127,7 +136,19 @@ class Bridge(QObject):
         if key.startswith('component-'):self._catalog_result(key,value,'')
         elif key=='versions':self._all=value;self._set(catalogLoading=False);self.filterVersions(self._query,self._snapshots)
         elif key.startswith('search-'):
-            if key==f'search-{self._search_id}':self._results=value;self.dataChanged.emit()
+            if key==f'search-{self._search_id}':
+                self._results=value['items'];self._set(resourceStatus=value.get('notice',''));self.dataChanged.emit()
+                for row in self._results:
+                    url=row.get('icon','')
+                    if url and not row.get('iconLocal'):
+                        ident=self._search_id;pid=row['id']
+                        def fetch_icon(url=url,pid=pid,ident=ident):
+                            local=self.icons.fetch(url)
+                            if not self._closing:self._done.emit('icon-'+str(ident),(pid,local),'')
+                        self.icon_pool.submit(fetch_icon)
+        elif key.startswith('icon-'):
+            if key=='icon-'+str(self._search_id) and value[1]:
+                self._results=[dict(row,iconLocal=value[1]) if row['id']==value[0] else row for row in self._results];self.dataChanged.emit()
         elif key in ('login','refresh-account'):
             self.accounts=[a for a in self.accounts if a['id']!=value['id']]+[value];self.vault.write(self.accounts);self.store.settings['selectedAccount']=value['id'];self.store.save();self._set(authCode='',authUrl='');self.refresh();self.message.emit('登录成功',value['name']+' 已添加')
         elif key.startswith('install-'):
@@ -166,8 +187,9 @@ class Bridge(QObject):
             self.tasksChanged.emit()
     @Slot(str)
     def _append_log(self,text):
-        text=redact(str(text));self._log.append(time.strftime('%H:%M:%S')+'  '+text);self._logdirty=True
-        if hasattr(self,'_logfile'):self._logfile.write(text+'\n')
+        text=redact(str(text));self._log.append(time.strftime('%H:%M:%S')+'  '+text[:8192]);self._logdirty=True
+        if hasattr(self,'_logfile') and not self._logfile.closed:self._logfile.write(text+'\n')
+        if not self.logtimer.isActive():self.logtimer.start(300 if self._foreground else 1200)
     def _flush_logs(self):
         if self._logdirty:self._logdirty=False;self.logsChanged.emit()
     @Slot(int)
@@ -188,6 +210,10 @@ class Bridge(QObject):
     def setSetting(self,key,value):
         if key not in self.store.settings:return
         if key=='language' and value not in LANGUAGES:return
+        if key=='modrinthApi':
+            from .modrinth_net import validate_endpoint
+            try:value=validate_endpoint(str(value)) if str(value).strip() else ''
+            except ValueError as exc:self.message.emit('网络设置',str(exc));return
         if self._runtime['busy'] and key in ('java','library','source','workers','selectedVersion','selectedInstance'):return
         if key in ('memory','width','height','workers','interval','fps'):
             bounds={'memory':(512,65536),'width':(640,7680),'height':(480,4320),'workers':(2,32),'interval':(5,60),'fps':(30,60)};lo,hi=bounds[key];value=max(lo,min(hi,int(value)))
@@ -277,8 +303,17 @@ class Bridge(QObject):
     def stopGame(self):self.engine.stop()
     @Slot(str,str)
     def searchMods(self,query,kind='mod'):
-        self._search_id+=1;ident=self._search_id;self._results=[];self.dataChanged.emit()
-        self.submit(f'search-{ident}',lambda:Modrinth(self.engine).search(query,kind))
+        if kind not in ('mod','resourcepack','shader','modpack'):return
+        # Coalesce typing/search bursts instead of queuing unlimited HTTP jobs.
+        self._search_id+=1;self._pending_search=(self._search_id,query,kind);self._set(resourceStatus='正在搜索…');self._search_timer.start(250)
+    def _dispatch_search(self):
+        if not self._pending_search or any(k.startswith('search-') for k in self._jobs):return
+        ident,query,kind=self._pending_search;self._pending_search=None
+        def search():
+            client=Modrinth(self.engine);rows=client.search(query[:160],kind)
+            for row in rows:row['iconLocal']=self.icons.cached(row.get('icon',''))
+            return {'items':rows,'notice':client.api.notice}
+        self.submit(f'search-{ident}',search)
     @Slot(str,str)
     def installMod(self,project,kind='mod'):
         if self._runtime['running']:self.message.emit('请先退出游戏','安装资源或修改模组前，请先退出当前实例。');return
@@ -437,9 +472,11 @@ class Bridge(QObject):
         fn={'host':lambda:self.terra.host(player),'join':lambda:self.terra.join(room,player),'leave':self.terra.leave}.get(action)
         if fn:self.submit('terra-'+action,fn,True)
     def _poll_terra(self):
-        if self.terra.port and not self._runtime['busy']:self.submit('terra-poll',self.terra.state)
+        if not self.terra.port:self.terratimer.stop();return
+        if not self._runtime['busy']:self.submit('terra-poll',self.terra.state)
     def _show_terra(self,state):
         self._terra_failures=0
+        if self.terra.port and not self.terratimer.isActive():self.terratimer.start(1500 if self._foreground else 5000)
         session=state.get('_session','')
         if session!=self._terra_session:self._terra_session=session;self._terra_index=-1
         index=state.get('index',self._terra_index+1)
@@ -455,7 +492,7 @@ class Bridge(QObject):
     def downloadUpdate(self):
         if not self._updates:return
         value=dict(self._updates)
-        self.submit('download-update',lambda:self.engine.net.download(value['url'],self.store.root/'downloads'/('AuroraLauncher-'+value['version']+'.exe'),value['digest'],'sha256',value['size'],lambda n,t:self._progress.emit('下载 Windows 新版',n,t)),True)
+        self.submit('download-update',lambda:self.engine.net.download(value['url'],self.store.root/'downloads'/('AuroraLauncher-Setup-'+value['version']+'.exe' if value.get('filename')=='AuroraLauncher-Setup.exe' else 'AuroraLauncher-'+value['version']+'.exe'),value['digest'],'sha256',value['size'],lambda n,t:self._progress.emit('下载 Windows 新版',n,t)),True)
     @Slot()
     def refresh(self):
         self._local=self.engine.local_versions();selected=self.store.settings.get('selectedVersion','')
@@ -485,6 +522,16 @@ class Bridge(QObject):
     @Slot()
     def useAccountSkin(self):
         self.store.settings['skinMode']='account';self.store.save();self._sync_skin(force=True);self.settingsChanged.emit()
+    def setForeground(self,value):
+        self._foreground=bool(value)
+        if self.terratimer.isActive():self.terratimer.setInterval(1500 if value else 5000)
+    @Slot()
+    def finishSetup(self):
+        self.store.settings['setupCompleted']=True;self.store.save();self.settingsChanged.emit()
+    @Slot()
+    def ensureVersions(self):
+        if not self._all and 'versions' not in self._jobs:self.fetchVersions()
     def close(self):
+        self._closing=True;self._search_timer.stop();self.logtimer.stop();self.terratimer.stop();self.icon_pool.shutdown(wait=False,cancel_futures=True)
         self.store.save();self.cancel.set();self._skin_cancel.set();self.pool.shutdown(wait=False,cancel_futures=True);self.catalog_pool.shutdown(wait=False,cancel_futures=True);self._logfile.flush();self._logfile.close()
 
